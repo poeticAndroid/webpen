@@ -1,0 +1,21 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Pen</title>
+</head>
+
+<body>
+  <h1>Web Pen</h1>
+  <ul>
+    <li><a href="./">./</a></li>
+    <li><a href="./index.html">./index.html</a></li>
+  </ul>
+  <script>
+    navigator.serviceWorker.register("./sw.js", { scope: "./" })
+  </script>
+</body>
+
+</html>
