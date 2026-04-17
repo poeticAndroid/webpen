@@ -5,16 +5,114 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Web Pen</title>
+  <style>
+    html,
+    textarea {
+      font-family: monospace;
+      background: #012;
+      color: #def;
+    }
+
+    textarea {
+      background: #123;
+      width: 99%;
+      height: 82vh;
+    }
+
+    a {
+      color: aqua;
+    }
+
+    #run {
+      position: absolute;
+      margin: 0;
+      right: 1em;
+      top: 1em;
+    }
+  </style>
 </head>
 
 <body>
-  <h1>Web Pen</h1>
-  <ul>
-    <li><a href="./">./</a></li>
-    <li><a href="./index.html">./index.html</a></li>
-  </ul>
+  <p>
+    <button id="deleteBtn">🗑️</button>
+    <input id="urlInp" type="text" value="./index.html" list="urlList" />
+    <datalist id="urlList"></datalist>
+    <button id="saveBtn">💾 Save</button> |
+    <a id="urlLink" accesskey="r" href="">👟 Run</a>
+  </p>
+  <p>
+    <textarea id="bodyInp" autofocus spellcheck=false cols=80 rows=20></textarea>
+  </p>
   <script>
-    fetch("index.html", { method: "delete" })
+    let url, list = []
+
+    async function load() {
+      document.getElementById("urlLink").href = document.getElementById("urlInp").value
+      url = document.getElementById("urlLink").href
+      //document.getElementById("urlLink").textContent = url
+      document.getElementById("urlInp").value = url
+      document.getElementById("urlInp").style.width = document.getElementById("urlInp").scrollWidth + "px"
+
+      fetch(url).then(resp => {
+        resp.text().then(text => {
+          document.getElementById("bodyInp").value = text
+        })
+      })
+      if (url.slice(-1) == "/") {
+        let entries = await ls(url)
+        console.log("entries", entries)
+        for (let entry of entries) {
+          entry = url + entry
+          if (entry && !list.includes(entry)) {
+            list.push(entry)
+            let opt = document.createElement("option")
+            opt.value = entry
+            document.getElementById("urlList").appendChild(opt)
+          }
+        }
+      }
+    }
+
+    async function ls(url) {
+      let resp = await fetch(url)
+      let text = await resp.text()
+      let doc = Document.parseHTML(text)
+
+      let base = doc.createElement("base")
+      base.href = resp.url
+      doc.head.prepend(base)
+
+      let links = doc.querySelectorAll("[src], [href]")
+      let entries = []
+      for (let link of links) {
+        entry = link.href || link.src
+        if (entry.includes(resp.url)) {
+          entry = entry.replace(resp.url, "")
+          if (entry.includes("/")) {
+            entry = entry.split("/")[0] + "/"
+          }
+          if (entry && !entries.includes(entry)) entries.push(entry)
+        }
+      }
+      return entries.sort()
+    }
+
+    document.getElementById("urlInp").addEventListener("change", load)
+    document.getElementById("deleteBtn").addEventListener("click", e => {
+      if (!confirm(`Delete ${url} ?`)) return
+      fetch(url, { method: "delete" }).then(resp => {
+        resp.text().then(text => {
+          document.getElementById("bodyInp").value = text
+        })
+      })
+    })
+    document.getElementById("saveBtn").addEventListener("click", e => {
+      fetch(url, { method: "put", body: document.getElementById("bodyInp").value }).then(resp => {
+        if (!resp?.ok) resp.text().then(alert)
+      })
+    })
+
+    load()
     navigator.serviceWorker.register("./sw.js", { scope: "./" })
   </script>
 </body>
