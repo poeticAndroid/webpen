@@ -13,7 +13,7 @@ addEventListener("fetch", async (event) => {
       break
 
     case "put":
-      event.respondWith(handlePut(url, event.request.body, event.request.headers.contentType))
+      event.respondWith(handlePut(url, event.request.arrayBuffer(), event.request.headers.contentType))
       break
 
     case "delete":
@@ -38,13 +38,13 @@ async function handleGet(url) {
         if (entry.includes("/")) {
           entry = entry.split("/")[0] + "/"
         }
-        if (!entries.includes(entry)) entries.push(entry)
+        if (entry && !entries.includes(entry)) entries.push(entry)
       }
     }
     entries = entries.sort()
-    let html = `<h1>${url}</h1><ul>`
+    let html = `<h1>${url}</h1><ul>\n`
     for (let entry of entries) {
-      html += `<li><a href="${entry}">${entry}</a></li>`
+      html += `<li><a href="${entry}">${entry}</a></li>\n`
     }
     html += `</ul>`
     return new Response(html, { headers: { "Content-Type": "text/html" } })
@@ -68,11 +68,36 @@ async function handleGet(url) {
 
 async function handlePut(url, body, type) {
   let cache = await caches.open(location.pathname)
+  if (!type) {
+    let ext = url.slice(url.lastIndexOf(".") + 1).toLowerCase()
+    switch (ext) {
+      case "html":
+      case "css":
+        type = "text/" + ext
+        break
+
+      case "js":
+        type = "text/javascript"
+        break
+
+      case "png":
+      case "gif":
+      case "jpeg":
+      case "svg":
+        type = "image/" + ext
+        break
+
+      default:
+        type = "application/" + ext
+        break
+    }
+  }
 
   if (url.slice(-1) == "/") {
     return new Response("Cannot write to directory!", { status: 400 })
   } else {
-    return cache.put(url, new Response(body, { headers: { "Content-Type": type } }))
+    await cache.put(url, new Response(await body, { headers: { "Content-Type": type } }))
+    return new Response("File written!")
   }
 }
 
