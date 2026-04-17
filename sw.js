@@ -42,7 +42,7 @@ async function handleGet(url) {
       }
     }
     entries = entries.sort()
-    let html = `<h1>${url}</h1><ul>\n`
+    let html = `<h1>${url}</h1><ul><li><a href="../">../</a></li>\n`
     for (let entry of entries) {
       html += `<li><a href="${entry}">${entry}</a></li>\n`
     }
