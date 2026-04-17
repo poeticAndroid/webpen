@@ -14,9 +14,11 @@
     }
 
     textarea {
+      border-width: 0;
+      outline: none;
       background: #123;
       width: 99%;
-      height: 82vh;
+      height: 92vh;
     }
 
     a {
@@ -26,18 +28,22 @@
     #run {
       position: absolute;
       margin: 0;
-      right: 1em;
-      top: 1em;
+      left: 0;
+      right: 0;
+      top: 0;
+      text-align: center;
+    }
+
+    #run a {
+      background-color: #234;
+      padding: 0.75em 1.5em;
+      border-radius: 0 0 2em 2em;
     }
   </style>
 </head>
 
 <body>
-  <p>
-    <button id="deleteBtn">🗑️</button>
-    <input id="urlInp" type="text" value="./" list="urlList" />
-    <datalist id="urlList"></datalist>
-    <button id="saveBtn">💾 Save</button> |
+  <p id="run">
     <a id="urlLink" accesskey="r" href="">👟 Run</a>
   </p>
   <p>
@@ -47,68 +53,30 @@
     let url, list = []
 
     async function load() {
-      document.getElementById("urlLink").href = document.getElementById("urlInp").value
-      url = document.getElementById("urlLink").href
-      //document.getElementById("urlLink").textContent = url
-      document.getElementById("urlInp").value = url
-      document.getElementById("urlInp").style.width = document.getElementById("urlInp").scrollWidth + "px"
+      if (!location.hash) location.replace("#./index.html")
+      url = location.hash.replace("#", "")
+      document.getElementById("urlLink").href = url
+      document.getElementById("urlLink").textContent = url
 
       fetch(url).then(resp => {
         resp.text().then(text => {
           document.getElementById("bodyInp").value = text
         })
       })
-      if (url.slice(-1) == "/") {
-        let entries = await ls(url)
-        for (let entry of entries) {
-          entry = url + entry
-          if (entry && !list.includes(entry)) {
-            list.push(entry)
-            let opt = document.createElement("option")
-            opt.value = entry
-            document.getElementById("urlList").appendChild(opt)
-          }
-        }
-      }
     }
 
-    async function ls(url) {
-      let resp = await fetch(url)
-      let text = await resp.text()
-      let doc = Document.parseHTML(text)
-
-      let base = doc.createElement("base")
-      base.href = resp.url
-      doc.head.prepend(base)
-
-      let links = doc.querySelectorAll("[src], [href]")
-      let entries = []
-      for (let link of links) {
-        entry = link.href || link.src
-        if (entry.includes(resp.url)) {
-          entry = entry.replace(resp.url, "")
-          if (entry.includes("/")) {
-            entry = entry.split("/")[0] + "/"
-          }
-          if (entry && !entries.includes(entry)) entries.push(entry)
-        }
-      }
-      return entries.sort()
-    }
-
-    document.getElementById("urlInp").addEventListener("change", load)
-    document.getElementById("deleteBtn").addEventListener("click", e => {
-      if (!confirm(`Delete ${url} ?`)) return
-      fetch(url, { method: "delete" }).then(resp => {
-        resp.text().then(text => {
-          document.getElementById("bodyInp").value = text
+    addEventListener("hashchange", load)
+    document.getElementById("bodyInp")?.addEventListener("change", e => {
+      if (document.getElementById("bodyInp").value.trim()) {
+        fetch(url, { method: "put", body: document.getElementById("bodyInp").value }).then(resp => {
+          if (!resp?.ok) resp.text().then(alert)
         })
-      })
-    })
-    document.getElementById("saveBtn").addEventListener("click", e => {
-      fetch(url, { method: "put", body: document.getElementById("bodyInp").value }).then(resp => {
-        if (!resp?.ok) resp.text().then(alert)
-      })
+      } else {
+        //if (!confirm(`Delete ${url} ?`)) return
+        fetch(url, { method: "delete" }).then(resp => {
+          if (!resp?.ok) resp.text().then(alert)
+        })
+      }
     })
 
     load()
