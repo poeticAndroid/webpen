@@ -35,7 +35,7 @@
 <body>
   <p>
     <button id="deleteBtn">🗑️</button>
-    <input id="urlInp" type="text" value="./index.html" list="urlList" />
+    <input id="urlInp" type="text" value="./" list="urlList" />
     <datalist id="urlList"></datalist>
     <button id="saveBtn">💾 Save</button> |
     <a id="urlLink" accesskey="r" href="">👟 Run</a>
@@ -60,7 +60,6 @@
       })
       if (url.slice(-1) == "/") {
         let entries = await ls(url)
-        console.log("entries", entries)
         for (let entry of entries) {
           entry = url + entry
           if (entry && !list.includes(entry)) {
@@ -114,6 +113,142 @@
 
     load()
     navigator.serviceWorker.register("./sw.js", { scope: "./" })
+  </script>
+  <script>
+    const codeEditor = document.getElementById("bodyInp")
+    let selectedTxt = ""
+    let dictionary = []
+    let codeLength = 0
+
+    function init() {
+      updateDictionary()
+      document.getElementById("bodyInp").addEventListener("keyup", () => {
+        selectedTxt = codeEditor.value.substring(codeEditor.selectionStart, codeEditor.selectionEnd)
+      })
+      document.getElementById("bodyInp").addEventListener("mouseup", (e) => {
+        selectedTxt = codeEditor.value.substring(codeEditor.selectionStart, codeEditor.selectionEnd)
+      })
+      document.getElementById("bodyInp").addEventListener("keydown", (e) => {
+        if (e.key === "Tab" && !e.ctrlKey) e.preventDefault()
+        setTimeout(() => {
+          codeEditor.focus()
+          switch (e.key) {
+            case "Backspace":
+            case "Delete":
+              selectedTxt = ""
+              break
+            case "Tab":
+              if (e.ctrlKey) return
+              if (selectedTxt) insert(selectedTxt)
+              else insert(detectIndent())
+              break
+            case "Enter":
+              let lastLine = codeEditor.value.substring(0, codeEditor.selectionStart).trim().split("\n").pop()
+              insert(lastLine.substring(0, lastLine.indexOf(lastLine.trim())))
+              break
+
+            case "\"":
+            case "'":
+              if (codeEditor.value.substr(codeEditor.selectionEnd, 1) === e.key) {
+                codeEditor.selectionEnd++
+                insert("")
+              } else {
+                insert("", selectedTxt, e.key)
+              }
+              break
+            case "(":
+              insert("", selectedTxt, ")")
+              break
+            case "[":
+              insert("", selectedTxt, "]")
+              break
+            case "{":
+              insert("", selectedTxt, "}")
+              break
+
+            case ")":
+            case "]":
+            case "}":
+              if (codeEditor.value.substr(codeEditor.selectionEnd, 1) === e.key) {
+                codeEditor.selectionEnd++
+                insert("")
+              }
+              break
+
+            default:
+              if (e.key.length === 1) {
+                if (e.key.match(/[_A-Za-z0-9]/)) suggest()
+                else updateDictionary()
+              }
+          }
+        })
+      }
+      )
+    }
+
+    function detectIndent() {
+      let code = codeEditor.value.trim().split("\n")
+      for (let i = 0; i < code.length; i++) {
+        const line = code[i]
+        if (line.trim() && line.substring(0, line.indexOf(line.trim()))) {
+          return line.substring(0, line.indexOf(line.trim()))
+        }
+      }
+      return "\t"
+    }
+    function suggest() {
+      if (codeEditor.value[codeEditor.selectionEnd].match(/[_A-Za-z0-9]/)) return
+      let pos = codeEditor.selectionStart
+      let code = codeEditor.value.substring(0, pos).split("\n").pop()
+      let word = ""
+      for (let i = 0; i < code.length; i++) {
+        const char = code[i]
+        if (char.match(/[_A-Za-z]/) || (word && char.match(/[0-9]/))) {
+          word += char
+        } else {
+          word = ""
+        }
+      }
+      if (!word) return
+      for (let i = 0; i < dictionary.length; i++) {
+        const entry = dictionary[i]
+        if (entry.substring(0, word.length) === word) {
+          insert("", entry.substring(word.length))
+          dictionary.splice(i, 1)
+          dictionary.unshift(entry)
+          return
+        }
+      }
+    }
+    function updateDictionary() {
+      let words = []
+      let code = codeEditor.value + "\n"
+      let word = ""
+      for (let i = 0; i < code.length; i++) {
+        const char = code[i]
+        if (char.match(/[_A-Za-z]/) || (word && char.match(/[0-9]/))) {
+          word += char
+        } else if (word) {
+          if (words.indexOf(word) < 0) words.push(word)
+          if (dictionary.indexOf(word) < 0) dictionary.push(word)
+          word = ""
+        }
+      }
+      for (let i = 0; i < dictionary.length; i++) {
+        const word = dictionary[i]
+        if (words.indexOf(word) < 0) {
+          dictionary.splice(i, 1)
+        }
+      }
+    }
+    function insert(before = "", selected = "", after = "") {
+      let start = codeEditor.selectionStart
+      let end = codeEditor.selectionEnd
+      codeEditor.value = codeEditor.value.substring(0, start) + before + selected + after + codeEditor.value.substring(end)
+      codeEditor.selectionStart = start + before.length
+      codeEditor.selectionEnd = codeEditor.selectionStart + selected.length
+    }
+    setTimeout(init)
   </script>
 </body>
 
