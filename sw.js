@@ -10,15 +10,15 @@ addEventListener("fetch", async (event) => {
   switch (method) {
     case "get":
       event.respondWith(handleGet(url))
-      break;
+      break
 
     case "put":
       event.respondWith(handlePut(url, event.request.body, event.request.headers.contentType))
-      break;
+      break
 
     case "delete":
       event.respondWith(handleDelete(url))
-      break;
+      break
 
     default:
       event.respondWith(new Response("Method not allowed!", { status: 405 }))
@@ -54,8 +54,14 @@ async function handleGet(url) {
     if (resp?.ok) {
       return resp
     } else {
-      cache.add(url)
-      return new Response("Not found!", { status: 404 })
+      await cache.add(url)
+      resp = await cache.match(url)
+
+      if (resp?.ok) {
+        return resp
+      } else {
+        return new Response("Not found!", { status: 404 })
+      }
     }
   }
 }
