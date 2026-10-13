@@ -44,7 +44,8 @@ async function handleGet(url) {
     entries = entries.sort()
     let html = `<style>@media (prefers-color-scheme: dark) {\n`
     html += `html { background-color: #111; color: #eee; }\n`
-    html += `a, a:link, a:visited { color: #9cf; }}</style>\n`
+    html += `a, a:link { color: #9cf; }}</style>\n`
+    html += `a:visited { color: #cf9; }}</style>\n`
     html += `<h1>${url}</h1><ul><li><a href="../">../</a></li>\n`
     for (let entry of entries) {
       html += `<li><a href="${entry}">${entry}</a></li>\n`
