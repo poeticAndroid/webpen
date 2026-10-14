@@ -185,7 +185,7 @@ function send(msg) {
 async function sendHashKey() {
   const encoder = new TextEncoder()
   const data = encoder.encode(user.id + "@" + location.protocol + "//" + location.host + "/duYJOCPvJ2oIvlzX0TgxGGVLTsjM2oDQ")
-  const hash = new Uint8Array(await window.crypto.subtle.digest("SHA-256", data))
+  const hash = new Uint8Array(await crypto.subtle.digest("SHA-256", data))
   let hex = ""
   for (let byte of hash) hex += byte.toString(16).padStart(2, "0")
   send({ type: "topic", key: hex })
