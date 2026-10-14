@@ -128,7 +128,8 @@ async function generateManifest() {
   let keys = await cache.keys()
   for (let req of keys) {
     let entry = manifest[req.url] = manifest[req.url] || {}
-    console.log("req", req)
+    let resp = await cache.match(req.url)
+    console.log("req", req, "resp", resp)
   }
 }
 generateManifest()
