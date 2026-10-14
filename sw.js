@@ -1,10 +1,12 @@
-console.log("Starting service worker", location.pathname)
+const root = location.toString().slice(0, location.toString.lastIndexOf("/") + 1)
+console.log("Starting service worker", location.pathname, "root", root)
 
 addEventListener("fetch", async (event) => {
   let method = ("" + event.request.method).toLowerCase()
   let url = "" + event.request.url
   url = url.split("?")[0]
   url = url.split("#")[0]
+  if (!url.includes(root)) method = "delete"
   console.log("Fetch detected:", method, url)
 
   switch (method) {
@@ -121,6 +123,15 @@ async function handleDelete(url) {
 
 let user, room
 let manifest = {}
+
+async function generateManifest() {
+  let keys = await cache.keys()
+  for (let req of keys) {
+    let entry = manifest[req.url] = manifest[req.url] || {}
+    console.log("req", req)
+  }
+}
+generateManifest()
 
 // Create WebSocket connection.
 const ws = new WebSocket("wss://hotater-eu.onrender.com/ws/chat")
