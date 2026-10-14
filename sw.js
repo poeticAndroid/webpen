@@ -72,7 +72,7 @@ async function handleGet(url) {
   }
 }
 
-async function handlePut(url, body, type) {
+async function handlePut(url, body, type, modified = new Date()) {
   let cache = await caches.open(location.pathname)
   if (!type) {
     let ext = url.slice(url.lastIndexOf(".") + 1).toLowerCase()
@@ -102,8 +102,14 @@ async function handlePut(url, body, type) {
   if (url.slice(-1) == "/") {
     return new Response("Cannot write to directory!", { status: 400 })
   } else {
-    await cache.put(url, new Response(await body, { headers: { "Content-Type": type } }))
-    return new Response("File written!")
+    await cache.put(url, new Response(await body, {
+      headers: {
+        "Content-Type": type,
+        "Last-Modified": modified.toUTCString()
+      }
+    }))
+    queueUpload(url)
+    return new Response("File put!")
   }
 }
 
@@ -137,6 +143,22 @@ async function generateManifest() {
 }
 generateManifest()
 
+async function queueUpload(url) {
+  let entry = manifest[url] = manifest[url] || {}
+  clearTimeout(entry.pendingUpload)
+  let resp = await cache.match(url)
+  entry.modified = new Date(resp.headers.get("Last-Modified"))
+  entry.length = parseInt(resp.headers.get("Content-Length"))
+  entry.pendingUpload = setTimeout(() => {
+    entry = JSON.parse(JSON.stringify(entry))
+    entry.type = "obj"
+    entry.id = url
+    entry.mime = resp.headers.get("Content-Type")
+    entry.content = resp.bytes().toBase64()
+    send(entry)
+  }, 1024 + Math.random() * 4096)
+}
+
 // Create WebSocket connection.
 ws = new WebSocket("wss://hotater-eu.onrender.com/ws/chat")
 ws.addEventListener("open", (event) => {
@@ -162,15 +184,31 @@ ws.addEventListener("message", (event) => {
 
     case "room":
       room = msg
-      // send({ id: "manifest", manifest: manifest })
+      send({ type: "obj", id: "manifest", manifest: manifest })
       break
 
     case "msg":
+      console.log("msg", msg)
       break
 
     case "obj":
       msg.modified = new Date(msg.modified)
       clearTimeout(manifest[msg.id]?.pendingUpload)
+      if (msg.id == "manifest") {
+        for (let url in msg.manifest) {
+          msg.manifest[url].modified = new Date(msg.manifest[url].modified)
+          if (msg.manifest[url].modified < manifest[url].modified) {
+            queueUpload(url)
+          }
+        }
+      } else {
+        if (msg.modified > manifest[msg.id].modified) {
+          handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
+        }
+        if (msg.modified < manifest[msg.id].modified) {
+          queueUpload(msg.id)
+        }
+      }
       break
 
     case "feedme":
