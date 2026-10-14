@@ -44,7 +44,7 @@ async function handleGet(url) {
     entries = entries.sort()
     let html = `<style>@media (prefers-color-scheme: dark) {\n`
     html += `html { background-color: #111; color: #eee; }\n`
-    html += `a, a:link { color: #9cf; }}</style>\n`
+    html += `a, a:link { color: #9cf; }\n`
     html += `a:visited { color: #cf9; }}</style>\n`
     html += `<h1>${url}</h1><ul><li><a href="../">../</a></li>\n`
     for (let entry of entries) {
@@ -114,4 +114,121 @@ async function handleDelete(url) {
     cache.delete(url)
     return new Response("File deleted!", { status: 200 })
   }
+}
+
+
+/* sync */
+
+let user, room
+// Create WebSocket connection.
+const ws = new WebSocket(location.protocol.replace("http", "ws") + "//" + location.host + "/ws/chat")
+
+ws.addEventListener("open", (event) => {
+  send({ type: "user", name: params.get("name") })
+})
+
+// Listen for messages
+ws.addEventListener("message", (event) => {
+  let msg = JSON.parse(event.data)
+  // console.log("Message from server ", msg)
+  switch (msg.type) {
+    case "user":
+      console.log(msg)
+      user = msg
+      sendHashKey()
+      break;
+
+    case "topic":
+      console.log(msg)
+      for (let roomId in msg.rooms) {
+        return send({ type: "room", id: roomId })
+      }
+      send({ type: "room", name: "party", store_obj: 42 })
+      break;
+
+    case "room":
+      console.log(msg)
+      room = msg
+      room._usernames = []
+      for (let id in room.users) {
+        room._usernames.push(room.users[id].name)
+      }
+      print("present are " + JSON.stringify(room._usernames))
+      break;
+
+    case "msg":
+      print(room.users[msg.from].name + ": " + msg.content)
+      break;
+
+    case "obj":
+      mouse(msg)
+      break;
+
+    case "feedme":
+      console.log(msg)
+      fetch(msg.url)
+      break;
+
+    default:
+      console.error("I dunno what to do with", msg)
+      break;
+  }
+})
+
+// Connection error
+ws.addEventListener("eror", e => {
+  console.error(e)
+  print("Conntection error!")
+})
+
+// Connection closed
+ws.addEventListener("close", e => {
+  console.warn(e)
+  print("Disconnected..")
+})
+
+if (location.search)
+  document.querySelector("form").addEventListener("submit", e => {
+    e.preventDefault()
+    if (!room) return;
+    let userInp = document.getElementById("userInp").value
+    send({ type: "msg", to: "all", content: userInp })
+    document.getElementById("userInp").value = ""
+  })
+else print("Enter username:")
+
+document.body.addEventListener("mousemove", e => {
+  if (!room) return;
+  send({ type: "obj", id: pointer_id, mouse: { x: e.pageX + 1, y: e.pageY + 1, c: color } })
+})
+
+function print(str, eol = "\n") {
+  document.getElementById("output").textContent += str + eol
+  setTimeout(() => { scrollBy(0, 1024) }, 32)
+}
+function send(msg) {
+  ws.send(JSON.stringify(msg))
+}
+
+function mouse(msg) {
+  if (msg.from == user.id) pointer_id = msg.id
+  let el = document.getElementById("mouse_" + msg.from)
+  if (!el) {
+    el = document.createElement("div")
+    el.id = "mouse_" + msg.from
+    el.classList.add("mouse")
+    document.body.appendChild(el)
+  }
+  el.style.left = `${msg.mouse.x}px`
+  el.style.top = `${msg.mouse.y}px`
+  el.style.background = msg.mouse.c
+}
+
+async function sendHashKey() {
+  const encoder = new TextEncoder()
+  const data = encoder.encode(user.id + "@" + location.protocol + "//" + location.host + "/secret_key")
+  const hash = new Uint8Array(await window.crypto.subtle.digest("SHA-256", data))
+  let hex = ""
+  for (let byte of hash) hex += byte.toString(16).padStart(2, "0")
+  send({ type: "topic", key: hex })
 }
