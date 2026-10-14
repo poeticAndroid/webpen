@@ -130,8 +130,9 @@ async function generateManifest() {
   for (let req of keys) {
     let entry = manifest[req.url] = manifest[req.url] || {}
     let resp = await cache.match(req.url)
-    console.log("req", req, "resp", resp,
-      'resp.headers.get("Last-Modified")', resp.headers.get("Last-Modified"))
+    entry.modified = new Date(resp.headers.get("Last-Modified"))
+    entry.length = parseInt(resp.headers.get("Content-Length"))
+    console.log("entry", entry)
   }
 }
 generateManifest()
@@ -161,12 +162,14 @@ ws.addEventListener("message", (event) => {
 
     case "room":
       room = msg
+      send({ id: "manifest", manifest: manifest })
       break
 
     case "msg":
       break
 
     case "obj":
+      msg.modified = new Date(msg.modified)
       clearTimeout(manifest[msg.id]?.pendingUpload)
       break
 
