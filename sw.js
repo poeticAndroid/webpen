@@ -1,4 +1,4 @@
-const root = location.toString().slice(0, location.toString.lastIndexOf("/") + 1)
+const root = location.toString().slice(0, location.toString().lastIndexOf("/") + 1)
 console.log("Starting service worker", location.pathname, "root", root)
 
 addEventListener("fetch", async (event) => {
@@ -121,7 +121,7 @@ async function handleDelete(url) {
 
 /* sync */
 
-let user, room
+let ws, user, room
 let manifest = {}
 
 async function generateManifest() {
@@ -135,7 +135,7 @@ async function generateManifest() {
 generateManifest()
 
 // Create WebSocket connection.
-const ws = new WebSocket("wss://hotater-eu.onrender.com/ws/chat")
+ws = new WebSocket("wss://hotater-eu.onrender.com/ws/chat")
 ws.addEventListener("open", (event) => {
   send({ type: "user", name: "webpen" })
 })
