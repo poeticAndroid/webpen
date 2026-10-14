@@ -125,6 +125,7 @@ let ws, user, room
 let manifest = {}
 
 async function generateManifest() {
+  let cache = await caches.open(location.pathname)
   let keys = await cache.keys()
   for (let req of keys) {
     let entry = manifest[req.url] = manifest[req.url] || {}
