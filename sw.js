@@ -162,7 +162,7 @@ ws.addEventListener("message", (event) => {
 
     case "room":
       room = msg
-      send({ id: "manifest", manifest: manifest })
+      // send({ id: "manifest", manifest: manifest })
       break
 
     case "msg":
