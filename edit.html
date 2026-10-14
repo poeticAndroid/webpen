@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Web Pen</title>
+  <style>
+    html,
+    textarea {
+      font-family: monospace;
+      background: #012;
+      color: #def;
+    }
+
+    textarea {
+      border-width: 0;
+      outline: none;
+      background: #123;
+      width: 99%;
+      height: 92vh;
+    }
+
+    a {
+      color: aqua;
+    }
+
+    #run {
+      position: absolute;
+      margin: 0;
+      left: 0;
+      right: 0;
+      top: 0;
+      text-align: center;
+    }
+
+    #run a {
+      background-color: #234;
+      padding: 0.75em 1.5em;
+      border-radius: 0 0 2em 2em;
+    }
+  </style>
+</head>
+
+<body>
+  <p id="run">
+    <a id="urlLink" accesskey="r" href="">👟 Run</a>
+  </p>
+  <p>
+    <textarea id="bodyInp" autofocus spellcheck=false cols=80 rows=20></textarea>
+  </p>
+  <script>
+    let url, list = []
+
+    async function load() {
+      if (!location.hash) location.replace("#./index.html")
+      url = location.hash.replace("#", "")
+      document.getElementById("urlLink").href = url
+      document.getElementById("urlLink").textContent = url
+
+      fetch(url).then(resp => {
+        resp.text().then(text => {
+          document.getElementById("bodyInp").value = text
+        })
+      })
+    }
+
+    addEventListener("hashchange", load)
+    document.getElementById("bodyInp")?.addEventListener("change", e => {
+      if (document.getElementById("bodyInp").value.trim()) {
+        fetch(url, { method: "put", body: document.getElementById("bodyInp").value }).then(resp => {
+          if (!resp?.ok) resp.text().then(alert)
+        })
+      } else {
+        //if (!confirm(`Delete ${url} ?`)) return
+        fetch(url, { method: "delete" }).then(resp => {
+          if (!resp?.ok) resp.text().then(alert)
+        })
+      }
+    })
+
+    load()
+    navigator.serviceWorker.register("./sw.js", { scope: "./" })
+  </script>
+  <script>
+    const codeEditor = document.getElementById("bodyInp")
+    let selectedTxt = ""
+    let dictionary = []
+    let codeLength = 0
+
+    function init() {
+      updateDictionary()
+      document.getElementById("bodyInp").addEventListener("keyup", () => {
+        selectedTxt = codeEditor.value.substring(codeEditor.selectionStart, codeEditor.selectionEnd)
+      })
+      document.getElementById("bodyInp").addEventListener("mouseup", (e) => {
+        selectedTxt = codeEditor.value.substring(codeEditor.selectionStart, codeEditor.selectionEnd)
+      })
+      document.getElementById("bodyInp").addEventListener("keydown", (e) => {
+        if (e.key === "Tab" && !e.ctrlKey) e.preventDefault()
+        setTimeout(() => {
+          codeEditor.focus()
+          switch (e.key) {
+            case "Backspace":
+            case "Delete":
+              selectedTxt = ""
+              break
+            case "Tab":
+              if (e.ctrlKey) return
+              if (selectedTxt) insert(selectedTxt)
+              else insert(detectIndent())
+              break
+            case "Enter":
+              let lastLine = codeEditor.value.substring(0, codeEditor.selectionStart).trim().split("\n").pop()
+              insert(lastLine.substring(0, lastLine.indexOf(lastLine.trim())))
+              break
+
+            case "\"":
+            case "'":
+              if (codeEditor.value.substr(codeEditor.selectionEnd, 1) === e.key) {
+                codeEditor.selectionEnd++
+                insert("")
+              } else {
+                insert("", selectedTxt, e.key)
+              }
+              break
+            case "(":
+              insert("", selectedTxt, ")")
+              break
+            case "[":
+              insert("", selectedTxt, "]")
+              break
+            case "{":
+              insert("", selectedTxt, "}")
+              break
+
+            case ")":
+            case "]":
+            case "}":
+              if (codeEditor.value.substr(codeEditor.selectionEnd, 1) === e.key) {
+                codeEditor.selectionEnd++
+                insert("")
+              }
+              break
+
+            default:
+              if (e.key.length === 1) {
+                if (e.key.match(/[_A-Za-z0-9]/)) suggest()
+                else updateDictionary()
+              }
+          }
+        })
+      }
+      )
+    }
+
+    function detectIndent() {
+      let code = codeEditor.value.trim().split("\n")
+      for (let i = 0; i < code.length; i++) {
+        const line = code[i]
+        if (line.trim() && line.substring(0, line.indexOf(line.trim()))) {
+          return line.substring(0, line.indexOf(line.trim()))
+        }
+      }
+      return "\t"
+    }
+    function suggest() {
+      if (codeEditor.value[codeEditor.selectionEnd].match(/[_A-Za-z0-9]/)) return
+      let pos = codeEditor.selectionStart
+      let code = codeEditor.value.substring(0, pos).split("\n").pop()
+      let word = ""
+      for (let i = 0; i < code.length; i++) {
+        const char = code[i]
+        if (char.match(/[_A-Za-z]/) || (word && char.match(/[0-9]/))) {
+          word += char
+        } else {
+          word = ""
+        }
+      }
+      if (!word) return
+      for (let i = 0; i < dictionary.length; i++) {
+        const entry = dictionary[i]
+        if (entry.substring(0, word.length) === word) {
+          insert("", entry.substring(word.length))
+          dictionary.splice(i, 1)
+          dictionary.unshift(entry)
+          return
+        }
+      }
+    }
+    function updateDictionary() {
+      let words = []
+      let code = codeEditor.value + "\n"
+      let word = ""
+      for (let i = 0; i < code.length; i++) {
+        const char = code[i]
+        if (char.match(/[_A-Za-z]/) || (word && char.match(/[0-9]/))) {
+          word += char
+        } else if (word) {
+          if (words.indexOf(word) < 0) words.push(word)
+          if (dictionary.indexOf(word) < 0) dictionary.push(word)
+          word = ""
+        }
+      }
+      for (let i = 0; i < dictionary.length; i++) {
+        const word = dictionary[i]
+        if (words.indexOf(word) < 0) {
+          dictionary.splice(i, 1)
+        }
+      }
+    }
+    function insert(before = "", selected = "", after = "") {
+      let start = codeEditor.selectionStart
+      let end = codeEditor.selectionEnd
+      codeEditor.value = codeEditor.value.substring(0, start) + before + selected + after + codeEditor.value.substring(end)
+      codeEditor.selectionStart = start + before.length
+      codeEditor.selectionEnd = codeEditor.selectionStart + selected.length
+    }
+    setTimeout(init)
+  </script>
+</body>
+
+</html>

@@ -120,52 +120,45 @@ async function handleDelete(url) {
 /* sync */
 
 let user, room
-// Create WebSocket connection.
-const ws = new WebSocket(location.protocol.replace("http", "ws") + "//" + location.host + "/ws/chat")
+let manifest = {}
 
+// Create WebSocket connection.
+const ws = new WebSocket("wss://hotater-eu.onrender.com/ws/chat")
 ws.addEventListener("open", (event) => {
-  send({ type: "user", name: params.get("name") })
+  send({ type: "user", name: "webpen" })
 })
 
 // Listen for messages
 ws.addEventListener("message", (event) => {
   let msg = JSON.parse(event.data)
-  // console.log("Message from server ", msg)
+  console.log("Message from server ", msg)
   switch (msg.type) {
     case "user":
-      console.log(msg)
       user = msg
       sendHashKey()
       break;
 
     case "topic":
-      console.log(msg)
       for (let roomId in msg.rooms) {
         return send({ type: "room", id: roomId })
       }
-      send({ type: "room", name: "party", store_obj: 42 })
+      send({ type: "room", name: "party" })
       break;
 
     case "room":
-      console.log(msg)
       room = msg
-      room._usernames = []
-      for (let id in room.users) {
-        room._usernames.push(room.users[id].name)
-      }
-      print("present are " + JSON.stringify(room._usernames))
       break;
 
     case "msg":
-      print(room.users[msg.from].name + ": " + msg.content)
+      // print(room.users[msg.from].name + ": " + msg.content)
       break;
 
     case "obj":
-      mouse(msg)
+      clearTimeout(manifest[msg.id]?.pendingUpload)
+      // mouse(msg)
       break;
 
     case "feedme":
-      console.log(msg)
       fetch(msg.url)
       break;
 
@@ -178,55 +171,20 @@ ws.addEventListener("message", (event) => {
 // Connection error
 ws.addEventListener("eror", e => {
   console.error(e)
-  print("Conntection error!")
 })
 
 // Connection closed
 ws.addEventListener("close", e => {
   console.warn(e)
-  print("Disconnected..")
 })
 
-if (location.search)
-  document.querySelector("form").addEventListener("submit", e => {
-    e.preventDefault()
-    if (!room) return;
-    let userInp = document.getElementById("userInp").value
-    send({ type: "msg", to: "all", content: userInp })
-    document.getElementById("userInp").value = ""
-  })
-else print("Enter username:")
-
-document.body.addEventListener("mousemove", e => {
-  if (!room) return;
-  send({ type: "obj", id: pointer_id, mouse: { x: e.pageX + 1, y: e.pageY + 1, c: color } })
-})
-
-function print(str, eol = "\n") {
-  document.getElementById("output").textContent += str + eol
-  setTimeout(() => { scrollBy(0, 1024) }, 32)
-}
 function send(msg) {
   ws.send(JSON.stringify(msg))
 }
 
-function mouse(msg) {
-  if (msg.from == user.id) pointer_id = msg.id
-  let el = document.getElementById("mouse_" + msg.from)
-  if (!el) {
-    el = document.createElement("div")
-    el.id = "mouse_" + msg.from
-    el.classList.add("mouse")
-    document.body.appendChild(el)
-  }
-  el.style.left = `${msg.mouse.x}px`
-  el.style.top = `${msg.mouse.y}px`
-  el.style.background = msg.mouse.c
-}
-
 async function sendHashKey() {
   const encoder = new TextEncoder()
-  const data = encoder.encode(user.id + "@" + location.protocol + "//" + location.host + "/secret_key")
+  const data = encoder.encode(user.id + "@" + location.protocol + "//" + location.host + "/duYJOCPvJ2oIvlzX0TgxGGVLTsjM2oDQ")
   const hash = new Uint8Array(await window.crypto.subtle.digest("SHA-256", data))
   let hex = ""
   for (let byte of hash) hex += byte.toString(16).padStart(2, "0")
