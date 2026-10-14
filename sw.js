@@ -130,7 +130,8 @@ async function generateManifest() {
   for (let req of keys) {
     let entry = manifest[req.url] = manifest[req.url] || {}
     let resp = await cache.match(req.url)
-    console.log("req", req, "resp", resp)
+    console.log("req", req, "resp", resp,
+      'resp.headers.get("Last-Modified")', resp.headers.get("Last-Modified"))
   }
 }
 generateManifest()
@@ -149,35 +150,33 @@ ws.addEventListener("message", (event) => {
     case "user":
       user = msg
       sendHashKey()
-      break;
+      break
 
     case "topic":
       for (let roomId in msg.rooms) {
         return send({ type: "room", id: roomId })
       }
       send({ type: "room", name: "party" })
-      break;
+      break
 
     case "room":
       room = msg
-      break;
+      break
 
     case "msg":
-      // print(room.users[msg.from].name + ": " + msg.content)
-      break;
+      break
 
     case "obj":
       clearTimeout(manifest[msg.id]?.pendingUpload)
-      // mouse(msg)
-      break;
+      break
 
     case "feedme":
       fetch(msg.url)
-      break;
+      break
 
     default:
       console.error("I dunno what to do with", msg)
-      break;
+      break
   }
 })
 
