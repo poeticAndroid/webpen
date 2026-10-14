@@ -72,7 +72,7 @@ async function handleGet(url) {
   }
 }
 
-async function handlePut(url, body, type, modified = new Date()) {
+async function handlePut(url, body, type, modified = null) {
   let cache = await caches.open(location.pathname)
   if (!type) {
     let ext = url.slice(url.lastIndexOf(".") + 1).toLowerCase()
@@ -105,10 +105,10 @@ async function handlePut(url, body, type, modified = new Date()) {
     await cache.put(url, new Response(await body, {
       headers: {
         "Content-Type": type,
-        "Last-Modified": modified.toUTCString()
+        "Last-Modified": (modified || new Date()).toUTCString()
       }
     }))
-    queueUpload(url)
+    modified || queueUpload(url)
     return new Response("File put!")
   }
 }
