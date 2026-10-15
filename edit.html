@@ -165,7 +165,7 @@
       return "\t"
     }
     function suggest() {
-      if (codeEditor.value[codeEditor.selectionEnd].match(/[_A-Za-z0-9]/)) return
+      if (codeEditor.value[codeEditor.selectionEnd]?.match(/[_A-Za-z0-9]/)) return
       let pos = codeEditor.selectionStart
       let code = codeEditor.value.substring(0, pos).split("\n").pop()
       let word = ""
