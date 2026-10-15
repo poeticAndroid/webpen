@@ -15,7 +15,7 @@ addEventListener("fetch", async (event) => {
       break
 
     case "put":
-      event.respondWith(handlePut(url, event.request.arrayBuffer(), event.request.headers.contentType))
+      event.respondWith(handlePut(url, event.request.bytes(), event.request.headers.contentType))
       break
 
     case "delete":
