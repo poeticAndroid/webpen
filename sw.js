@@ -44,7 +44,7 @@ async function handleGet(url) {
       }
     }
     entries = entries.sort()
-    let html = `<style>@media (prefers-color-scheme: dark) {\n`
+    let html = `<!DOCTYPE html><style>@media (prefers-color-scheme: dark) {\n`
     html += `html { background-color: #111; color: #eee; }\n`
     html += `a, a:link { color: #9cf; }\n`
     html += `a:visited { color: #cf9; }}</style>\n`
@@ -150,12 +150,12 @@ async function queueUpload(url, downloaded) {
   let resp = await cache.match(url)
   entry.modified = new Date(resp.headers.get("Last-Modified"))
   entry.length = parseInt(resp.headers.get("Content-Length"))
-  if (!downloaded) entry.pendingUpload = setTimeout(() => {
+  if (!downloaded) entry.pendingUpload = setTimeout(async () => {
     entry = JSON.parse(JSON.stringify(entry))
     entry.type = "obj"
     entry.id = url
     entry.mime = resp.headers.get("Content-Type")
-    entry.content = resp.bytes().toBase64()
+    entry.content = (await resp.bytes()).toBase64()
     send(entry)
   }, 1024 + Math.random() * 4096)
 }
