@@ -196,9 +196,10 @@ ws.addEventListener("message", (event) => {
       msg.modified = new Date(msg.modified)
       clearTimeout(manifest[msg.id]?.pendingUpload)
       if (msg.id == "manifest") {
-        for (let url in msg.manifest) {
+        for (let url in manifest) {
+          msg.manifest[url] = msg.manifest[url] || { modified: 0 }
           msg.manifest[url].modified = new Date(msg.manifest[url].modified)
-          if (msg.manifest[url].modified < manifest[url]?.modified) {
+          if (msg.manifest[url].modified < (manifest[url]?.modified || 0)) {
             queueUpload(url)
           }
         }
