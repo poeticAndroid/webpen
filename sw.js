@@ -121,7 +121,15 @@ async function handleDelete(url) {
   if (url.slice(-1) == "/") {
     return new Response("Cannot delete directory!", { status: 400 })
   } else {
-    cache.delete(url)
+    await cache.put(url, new Response("", {
+      status: 404,
+      headers: {
+        "Content-Type": type,
+        "Content-Length": 0,
+        "Last-Modified": (modified || new Date()).toUTCString()
+      }
+    }))
+    queueUpload(url, modified)
     return new Response("File deleted!", { status: 200 })
   }
 }
@@ -229,8 +237,10 @@ ws.addEventListener("message", (event) => {
               handlePut(msg.id, manifest[msg.id].content, msg.mime, msg.modified)
               delete manifest[msg.id].content
             }, 4096)
-          } else {
+          } else if (msg.size) {
             handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
+          } else {
+            handleDelete(msg.id, msg.modified)
           }
         }
       }
