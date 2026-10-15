@@ -86,6 +86,10 @@ async function handlePut(url, body, type, modified = null) {
         type = "text/javascript"
         break
 
+      case "txt":
+        type = "text/plain"
+        break
+
       case "png":
       case "gif":
       case "jpeg":
@@ -124,7 +128,7 @@ async function handleDelete(url, modified) {
     await cache.put(url, new Response("", {
       status: 404,
       headers: {
-        "Content-Type": type,
+        "Content-Type": "text/plain",
         "Content-Length": 0,
         "Last-Modified": (modified || new Date()).toUTCString()
       }
