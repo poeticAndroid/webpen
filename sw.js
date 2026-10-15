@@ -140,6 +140,7 @@ async function generateManifest() {
     let resp = await cache.match(req.url)
     entry.modified = new Date(resp.headers.get("Last-Modified"))
     entry.size = parseInt(resp.headers.get("Content-Length"))
+    if (!entry.size) handleDelete(req.url)
     console.log("entry", entry)
   }
 }
