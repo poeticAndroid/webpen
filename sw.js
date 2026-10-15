@@ -105,6 +105,7 @@ async function handlePut(url, body, type, modified = null) {
     await cache.put(url, new Response(await body, {
       headers: {
         "Content-Type": type,
+        "Content-Length": (await body).length,
         "Last-Modified": (modified || new Date()).toUTCString()
       }
     }))
