@@ -31,11 +31,9 @@ async function handleGet(url) {
   let cache = await caches.open(location.pathname)
 
   if (url.slice(-1) == "/") {
-    let keys = await cache.keys()
     let entries = []
-    for (let req of keys) {
-      let entry = req.url
-      if (entry.includes(url)) {
+    for (let entry in manifest) {
+      if (entry.includes(url) && manifest[entry]?.size) {
         entry = entry.replace(url, "")
         if (entry.includes("/")) {
           entry = entry.split("/")[0] + "/"
