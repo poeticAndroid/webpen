@@ -145,12 +145,12 @@ generateManifest()
 
 async function queueUpload(url, downloaded) {
   let entry = manifest[url] = manifest[url] || {}
-  clearTimeout(entry.pendingUpload)
+  clearTimeout(entry._pendingUpload)
   let cache = await caches.open(location.pathname)
   let resp = await cache.match(url)
   entry.modified = new Date(resp.headers.get("Last-Modified"))
   entry.length = parseInt(resp.headers.get("Content-Length"))
-  if (!downloaded) entry.pendingUpload = setTimeout(async () => {
+  if (!downloaded) entry._pendingUpload = setTimeout(async () => {
     entry = JSON.parse(JSON.stringify(entry))
     entry.type = "obj"
     entry.id = url
@@ -194,7 +194,7 @@ ws.addEventListener("message", (event) => {
 
     case "obj":
       msg.modified = new Date(msg.modified)
-      clearTimeout(manifest[msg.id]?.pendingUpload)
+      clearTimeout(manifest[msg.id]?._pendingUpload)
       if (msg.id == "manifest") {
         for (let url in manifest) {
           msg.manifest[url] = msg.manifest[url] || { modified: 0 }
