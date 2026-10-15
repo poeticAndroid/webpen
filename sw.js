@@ -108,7 +108,7 @@ async function handlePut(url, body, type, modified = null) {
         "Last-Modified": (modified || new Date()).toUTCString()
       }
     }))
-    modified || queueUpload(url)
+    queueUpload(url, modified)
     return new Response("File put!")
   }
 }
@@ -143,13 +143,14 @@ async function generateManifest() {
 }
 generateManifest()
 
-async function queueUpload(url) {
+async function queueUpload(url, downloaded) {
   let entry = manifest[url] = manifest[url] || {}
   clearTimeout(entry.pendingUpload)
+  let cache = await caches.open(location.pathname)
   let resp = await cache.match(url)
   entry.modified = new Date(resp.headers.get("Last-Modified"))
   entry.length = parseInt(resp.headers.get("Content-Length"))
-  entry.pendingUpload = setTimeout(() => {
+  if (!downloaded) entry.pendingUpload = setTimeout(() => {
     entry = JSON.parse(JSON.stringify(entry))
     entry.type = "obj"
     entry.id = url
@@ -197,15 +198,15 @@ ws.addEventListener("message", (event) => {
       if (msg.id == "manifest") {
         for (let url in msg.manifest) {
           msg.manifest[url].modified = new Date(msg.manifest[url].modified)
-          if (msg.manifest[url].modified < manifest[url].modified) {
+          if (msg.manifest[url].modified < manifest[url]?.modified) {
             queueUpload(url)
           }
         }
       } else {
-        if (msg.modified > manifest[msg.id].modified) {
+        if (msg.modified > (manifest[msg.id]?.modified || 0)) {
           handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
         }
-        if (msg.modified < manifest[msg.id].modified) {
+        if (msg.modified < (manifest[msg.id]?.modified || 0)) {
           queueUpload(msg.id)
         }
       }
