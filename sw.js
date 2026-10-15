@@ -4,9 +4,9 @@ console.log("Starting service worker", location.pathname, "root", root)
 addEventListener("fetch", async (event) => {
   let method = ("" + event.request.method).toLowerCase()
   let url = "" + event.request.url
+  if (!url.includes(root)) return event.respondWith(fetch(event.request))
   url = url.split("?")[0]
   url = url.split("#")[0]
-  if (!url.includes(root)) method = "delete"
   console.log("Fetch detected:", method, url)
 
   switch (method) {
@@ -115,7 +115,7 @@ async function handlePut(url, body, type, modified = null) {
   }
 }
 
-async function handleDelete(url) {
+async function handleDelete(url, modified) {
   let cache = await caches.open(location.pathname)
 
   if (url.slice(-1) == "/") {
@@ -148,7 +148,6 @@ async function generateManifest() {
     let resp = await cache.match(req.url)
     entry.modified = new Date(resp.headers.get("Last-Modified"))
     entry.size = parseInt(resp.headers.get("Content-Length"))
-    if (!entry.size) handleDelete(req.url)
     console.log("entry", entry)
   }
 }
