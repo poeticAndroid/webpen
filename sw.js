@@ -238,6 +238,7 @@ ws.addEventListener("close", e => {
 })
 
 function send(msg) {
+  console.log("sending", msg, "...")
   ws.send(JSON.stringify(msg))
 }
 
