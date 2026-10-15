@@ -224,13 +224,12 @@ ws.addEventListener("message", (event) => {
           queueUpload(msg.id)
         } else if (msg.modified > (manifest[msg.id]?.modified || 0)) {
           handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
-        } else if (msg.offset == manifest[msg.id]?.size && manifest[msg.id]?.content instanceof Uint8Array) {
+        } else if (manifest[msg.id]?.content instanceof Uint8Array && msg.offset == manifest[msg.id].content.length) {
           clearTimeout(manifest[msg.id]._pendingDownload)
           let body = new Uint8Array(manifest[msg.id].content.length + Uint8Array.fromBase64(msg.content).length)
           body.set(manifest[msg.id].content)
           body.set(Uint8Array.fromBase64(msg.content), manifest[msg.id].content.length)
           manifest[msg.id].content = body
-          manifest[msg.id].size = body.length
           manifest[msg.id]._pendingDownload = setTimeout(() => {
             handlePut(msg.id, body, msg.mime, msg.modified)
           }, 8192)
