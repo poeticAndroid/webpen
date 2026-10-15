@@ -103,6 +103,10 @@ async function handlePut(url, body, type, modified = null) {
     return new Response("Cannot write to directory!", { status: 400 })
   } else {
     body = await body
+    manifest[url] = manifest[url] || {}
+    manifest[url].content = body
+    clearTimeout(manifest[url]._pendingDownload)
+    manifest[url]._pendingDownload = setTimeout(() => { delete manifest[url].content }, 8192)
     await cache.put(url, new Response(body, {
       headers: {
         "Content-Type": type,
@@ -159,8 +163,16 @@ async function queueUpload(url, downloaded) {
     entry.type = "obj"
     entry.id = url
     entry.mime = resp.headers.get("Content-Type")
-    entry.content = body.toBase64()
-    send(entry)
+    if (body.length > 32768) {
+      for (let offset = 0; offset < body.length; offset += 32768) {
+        entry.offset = offset
+        entry.content = body.slice(offset, offset + 32768).toBase64()
+        send(entry)
+      }
+    } else {
+      entry.content = body.toBase64()
+      send(entry)
+    }
   }, 1024 + Math.random() * 4096)
 }
 
@@ -197,7 +209,6 @@ ws.addEventListener("message", (event) => {
       break
 
     case "obj":
-      msg.modified = new Date(msg.modified)
       clearTimeout(manifest[msg.id]?._pendingUpload)
       if (msg.id == "manifest") {
         for (let url in manifest) {
@@ -208,11 +219,20 @@ ws.addEventListener("message", (event) => {
           }
         }
       } else {
-        if (msg.modified > (manifest[msg.id]?.modified || 0)) {
-          handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
-        }
+        msg.modified = new Date(msg.modified)
         if (msg.modified < (manifest[msg.id]?.modified || 0)) {
           queueUpload(msg.id)
+        } else if (msg.modified > (manifest[msg.id]?.modified || 0)) {
+          handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
+        } else if (msg.offset == manifest[msg.id]?.size && manifest[msg.id]?.content instanceof Uint8Array) {
+          clearTimeout(manifest[msg.id]._pendingDownload)
+          let body = new Uint8Array(manifest[msg.id].content.length + Uint8Array.fromBase64(msg.content).length)
+          body.set(manifest[msg.id].content)
+          body.set(Uint8Array.fromBase64(msg.content), manifest[msg.id].content.length)
+          manifest[msg.id].content = body
+          manifest[msg.id]._pendingDownload = setTimeout(() => {
+            handlePut(msg.id, body, msg.mime, msg.modified)
+          }, 8192)
         }
       }
       break
