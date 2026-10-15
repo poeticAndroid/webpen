@@ -139,7 +139,7 @@ async function generateManifest() {
     let entry = manifest[req.url] = manifest[req.url] || {}
     let resp = await cache.match(req.url)
     entry.modified = new Date(resp.headers.get("Last-Modified"))
-    entry.length = parseInt(resp.headers.get("Content-Length"))
+    entry.size = parseInt(resp.headers.get("Content-Length"))
     console.log("entry", entry)
   }
 }
@@ -151,7 +151,7 @@ async function queueUpload(url, downloaded) {
   let cache = await caches.open(location.pathname)
   let resp = await cache.match(url)
   entry.modified = new Date(resp.headers.get("Last-Modified"))
-  entry.length = parseInt(resp.headers.get("Content-Length"))
+  entry.size = parseInt(resp.headers.get("Content-Length"))
   if (!downloaded) entry._pendingUpload = setTimeout(async () => {
     entry = JSON.parse(JSON.stringify(entry))
     entry.type = "obj"
