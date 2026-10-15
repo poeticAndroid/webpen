@@ -105,8 +105,8 @@ async function handlePut(url, body, type, modified = null) {
     body = await body
     manifest[url] = manifest[url] || {}
     manifest[url].content = body
-    clearTimeout(manifest[url]._pendingDownload)
-    manifest[url]._pendingDownload = setTimeout(() => { delete manifest[url].content }, 8192)
+    clearTimeout(manifest[url]._pending)
+    manifest[url]._pending = setTimeout(() => { delete manifest[url].content }, 4096)
     await cache.put(url, new Response(body, {
       headers: {
         "Content-Type": type,
@@ -152,15 +152,16 @@ generateManifest()
 
 async function queueUpload(url, downloaded) {
   let entry = manifest[url] = manifest[url] || {}
-  clearTimeout(entry._pendingUpload)
+  clearTimeout(entry._pending)
   let cache = await caches.open(location.pathname)
   let resp = await cache.match(url)
   let body = await resp.bytes()
   entry.modified = new Date(resp.headers.get("Last-Modified"))
   entry.size = parseInt(resp.headers.get("Content-Length"))
-  if (!downloaded) entry._pendingUpload = setTimeout(async () => {
+  if (!downloaded) entry._pending = setTimeout(async () => {
     entry = JSON.parse(JSON.stringify(entry))
     entry.type = "obj"
+    entry.to = "others"
     entry.id = url
     entry.mime = resp.headers.get("Content-Type")
     if (body.length > 32768) {
@@ -201,7 +202,7 @@ ws.addEventListener("message", (event) => {
 
     case "room":
       room = msg
-      send({ type: "obj", id: "manifest", manifest: manifest })
+      send({ type: "obj", to: "others", id: "manifest", manifest: manifest })
       break
 
     case "msg":
@@ -209,7 +210,7 @@ ws.addEventListener("message", (event) => {
       break
 
     case "obj":
-      clearTimeout(manifest[msg.id]?._pendingUpload)
+      clearTimeout(manifest[msg.id]?._pending)
       if (msg.id == "manifest") {
         for (let url in manifest) {
           msg.manifest[url] = msg.manifest[url] || { modified: 0 }
@@ -225,14 +226,14 @@ ws.addEventListener("message", (event) => {
         } else if (msg.modified > (manifest[msg.id]?.modified || 0)) {
           handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
         } else if (manifest[msg.id]?.content instanceof Uint8Array && msg.offset == manifest[msg.id].content.length) {
-          clearTimeout(manifest[msg.id]._pendingDownload)
+          clearTimeout(manifest[msg.id]._pending)
           let body = new Uint8Array(manifest[msg.id].content.length + Uint8Array.fromBase64(msg.content).length)
           body.set(manifest[msg.id].content)
           body.set(Uint8Array.fromBase64(msg.content), manifest[msg.id].content.length)
           manifest[msg.id].content = body
-          manifest[msg.id]._pendingDownload = setTimeout(() => {
+          manifest[msg.id]._pending = setTimeout(() => {
             handlePut(msg.id, body, msg.mime, msg.modified)
-          }, 8192)
+          }, 4096)
         }
       }
       break
