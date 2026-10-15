@@ -68,7 +68,7 @@
     addEventListener("hashchange", load)
     document.getElementById("bodyInp")?.addEventListener("change", e => {
       if (document.getElementById("bodyInp").value.trim()) {
-        fetch(url, { method: "put", body: document.getElementById("bodyInp").value }).then(resp => {
+        fetch(url, { method: "put", body: document.getElementById("bodyInp").value.trim() + "\n" }).then(resp => {
           if (!resp?.ok) resp.text().then(alert)
         })
       } else {
