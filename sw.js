@@ -103,10 +103,6 @@ async function handlePut(url, body, type, modified = null) {
     return new Response("Cannot write to directory!", { status: 400 })
   } else {
     body = await body
-    manifest[url] = manifest[url] || {}
-    manifest[url].content = body
-    clearTimeout(manifest[url]._pending)
-    manifest[url]._pending = setTimeout(() => { delete manifest[url].content }, 4096)
     await cache.put(url, new Response(body, {
       headers: {
         "Content-Type": type,
@@ -224,16 +220,18 @@ ws.addEventListener("message", (event) => {
         if (msg.modified < (manifest[msg.id]?.modified || 0)) {
           queueUpload(msg.id)
         } else if (msg.modified > (manifest[msg.id]?.modified || 0)) {
-          handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
-        } else if (manifest[msg.id]?.content instanceof Uint8Array && msg.offset == manifest[msg.id].content.length) {
-          clearTimeout(manifest[msg.id]._pending)
-          let body = new Uint8Array(manifest[msg.id].content.length + Uint8Array.fromBase64(msg.content).length)
-          body.set(manifest[msg.id].content)
-          body.set(Uint8Array.fromBase64(msg.content), manifest[msg.id].content.length)
-          manifest[msg.id].content = body
-          manifest[msg.id]._pending = setTimeout(() => {
-            handlePut(msg.id, body, msg.mime, msg.modified)
-          }, 4096)
+          if (typeof msg.offset == "number") {
+            let body = Uint8Array.fromBase64(msg.content)
+            manifest[msg.id] = manifest[msg.id] || {}
+            if (msg.offset == 0) manifest[msg.id].content = new Uint8Array(msg.size)
+            manifest[msg.id].content.set(body, msg.offset)
+            manifest[msg.id]._pending = setTimeout(() => {
+              handlePut(msg.id, manifest[msg.id].content, msg.mime, msg.modified)
+              delete manifest[msg.id].content
+            }, 4096)
+          } else {
+            handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
+          }
         }
       }
       break
