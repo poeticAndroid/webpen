@@ -102,10 +102,11 @@ async function handlePut(url, body, type, modified = null) {
   if (url.slice(-1) == "/") {
     return new Response("Cannot write to directory!", { status: 400 })
   } else {
-    await cache.put(url, new Response(await body, {
+    body = await body
+    await cache.put(url, new Response(body, {
       headers: {
         "Content-Type": type,
-        "Content-Length": (await body).length,
+        "Content-Length": body.length,
         "Last-Modified": (modified || new Date()).toUTCString()
       }
     }))
