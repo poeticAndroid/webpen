@@ -230,6 +230,7 @@ ws.addEventListener("message", (event) => {
           body.set(manifest[msg.id].content)
           body.set(Uint8Array.fromBase64(msg.content), manifest[msg.id].content.length)
           manifest[msg.id].content = body
+          manifest[msg.id].size = body.length
           manifest[msg.id]._pendingDownload = setTimeout(() => {
             handlePut(msg.id, body, msg.mime, msg.modified)
           }, 8192)
