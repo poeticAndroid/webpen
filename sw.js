@@ -151,6 +151,7 @@ async function queueUpload(url, downloaded) {
   clearTimeout(entry._pendingUpload)
   let cache = await caches.open(location.pathname)
   let resp = await cache.match(url)
+  let body = await resp.bytes()
   entry.modified = new Date(resp.headers.get("Last-Modified"))
   entry.size = parseInt(resp.headers.get("Content-Length"))
   if (!downloaded) entry._pendingUpload = setTimeout(async () => {
@@ -158,7 +159,7 @@ async function queueUpload(url, downloaded) {
     entry.type = "obj"
     entry.id = url
     entry.mime = resp.headers.get("Content-Type")
-    entry.content = (await resp.bytes()).toBase64()
+    entry.content = body.toBase64()
     send(entry)
   }, 1024 + Math.random() * 4096)
 }
