@@ -31,6 +31,7 @@ async function handleGet(url) {
   let cache = await caches.open(location.pathname)
 
   if (url.slice(-1) == "/") {
+    while (!manifest.isComplete) await sleep(32)
     let entries = []
     for (let entry in manifest) {
       if (entry.includes(url) && manifest[entry]?.size) {
@@ -152,6 +153,7 @@ async function generateManifest() {
     entry.size = parseInt(resp.headers.get("Content-Length"))
     console.log("entry", entry)
   }
+  manifest.isComplete = true
 }
 generateManifest()
 
@@ -279,4 +281,8 @@ async function sendHashKey() {
   let hex = ""
   for (let byte of hash) hex += byte.toString(16).padStart(2, "0")
   send({ type: "topic", key: hex })
+}
+
+async function sleep(msecs) {
+  return new Promise((resolve, reject) => setTimeout(resolve, msecs))
 }
