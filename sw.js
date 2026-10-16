@@ -56,13 +56,13 @@ async function handleGet(url) {
   } else {
     let resp = await cache.match(url)
 
-    if (resp?.ok) {
+    if (resp?.ok && parseInt(resp.headers.get("Content-Length"))) {
       return resp
     } else {
       await cache.add(url)
       resp = await cache.match(url)
 
-      if (resp?.ok) {
+      if (resp?.ok && parseInt(resp.headers.get("Content-Length"))) {
         return resp
       } else {
         return new Response("Not found!", { status: 404 })
@@ -125,7 +125,7 @@ async function handleDelete(url, modified) {
     return new Response("Cannot delete directory!", { status: 400 })
   } else {
     await cache.put(url, new Response("", {
-      status: 404,
+      //status: 404,
       headers: {
         "Content-Type": "text/plain",
         "Content-Length": 0,
