@@ -140,7 +140,8 @@ async function handleDelete(url, modified) {
 
 /* sync */
 
-let ws, user, room
+let ws, inaccessible = []
+let user, room, account
 let manifest = {}
 
 async function generateManifest() {
@@ -154,6 +155,7 @@ async function generateManifest() {
     console.log("entry", entry)
   }
   manifest.isComplete = true
+  connect()
 }
 generateManifest()
 
@@ -184,90 +186,109 @@ async function queueUpload(url, downloaded) {
   }, 1024 + Math.random() * 4096)
 }
 
-// Create WebSocket connection.
-ws = new WebSocket("wss://hotater-eu.onrender.com/ws/chat")
-ws.addEventListener("open", (event) => {
-  send({ type: "user", name: "webpen" })
-})
+async function connect() {
+  account = null
+  user = null
+  room = null
+  let cache = await caches.open(location.pathname)
+  let resp = await cache.match(root + "sync.json")
+  account = await resp.json()
+  if (!account) return
+  if (!account.name) return
+  if (!account.password) return
 
-// Listen for messages
-ws.addEventListener("message", (event) => {
-  let msg = JSON.parse(event.data)
-  console.log("Message from server ", msg)
-  switch (msg.type) {
-    case "user":
-      user = msg
-      sendHashKey()
-      break
+  // Create WebSocket connection.
+  ws = new WebSocket("wss://hotater-eu.onrender.com/ws/chat")
+  ws.addEventListener("open", (event) => {
+    send({ type: "user", name: "webpen" })
+  })
 
-    case "topic":
-      for (let roomId in msg.rooms) {
-        return send({ type: "room", id: roomId })
-      }
-      send({ type: "room", name: "party" })
-      break
+  // Listen for messages
+  ws.addEventListener("message", (event) => {
+    let msg = JSON.parse(event.data)
+    console.log("Message from server ", msg)
+    switch (msg.type) {
+      case "user":
+        user = msg
+        sendHashKey()
+        break
 
-    case "room":
-      room = msg
-      send({ type: "obj", to: "others", id: "manifest", manifest: manifest })
-      break
-
-    case "msg":
-      console.log("msg", msg)
-      break
-
-    case "obj":
-      clearTimeout(manifest[msg.id]?._pending)
-      if (msg.id == "manifest") {
-        for (let url in manifest) {
-          msg.manifest[url] = msg.manifest[url] || { modified: 0 }
-          msg.manifest[url].modified = new Date(msg.manifest[url].modified)
-          if (msg.manifest[url].modified < (manifest[url]?.modified || 0)) {
-            queueUpload(url)
+      case "topic":
+        for (let roomId of inaccessible) {
+          delete msg.rooms[roomId]
+        }
+        for (let roomId in msg.rooms) {
+          if (msg.rooms[roomId].name == account.name) {
+            inaccessible.push(roomId)
+            return send({ type: "room", id: roomId, password: account.password })
           }
         }
-      } else {
-        msg.modified = new Date(msg.modified)
-        if (msg.modified < (manifest[msg.id]?.modified || 0)) {
-          queueUpload(msg.id)
-        } else if (msg.modified > (manifest[msg.id]?.modified || 0)) {
-          if (typeof msg.offset == "number") {
-            let body = Uint8Array.fromBase64(msg.content)
-            manifest[msg.id] = manifest[msg.id] || {}
-            if (msg.offset == 0) manifest[msg.id].content = new Uint8Array(msg.size)
-            manifest[msg.id].content.set(body, msg.offset)
-            manifest[msg.id]._pending = setTimeout(() => {
-              handlePut(msg.id, manifest[msg.id].content, msg.mime, msg.modified)
-              delete manifest[msg.id].content
-            }, 4096)
-          } else if (msg.size) {
-            handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
-          } else {
-            handleDelete(msg.id, msg.modified)
+        send({ type: "room", name: account.name, password: account.password })
+        break
+
+      case "room":
+        room = msg
+        if (inaccessible.includes(room.id)) inaccessible.splice(inaccessible.indexOf(room.id), 1)
+        send({ type: "obj", to: "others", id: "manifest", manifest: manifest })
+        break
+
+      case "msg":
+        console.log("msg", msg)
+        break
+
+      case "obj":
+        clearTimeout(manifest[msg.id]?._pending)
+        if (msg.id == "manifest") {
+          for (let url in manifest) {
+            msg.manifest[url] = msg.manifest[url] || { modified: 0 }
+            msg.manifest[url].modified = new Date(msg.manifest[url].modified)
+            if (msg.manifest[url].modified < (manifest[url]?.modified || 0)) {
+              queueUpload(url)
+            }
+          }
+        } else {
+          msg.modified = new Date(msg.modified)
+          if (msg.modified < (manifest[msg.id]?.modified || 0)) {
+            queueUpload(msg.id)
+          } else if (msg.modified > (manifest[msg.id]?.modified || 0)) {
+            if (typeof msg.offset == "number") {
+              let body = Uint8Array.fromBase64(msg.content)
+              manifest[msg.id] = manifest[msg.id] || {}
+              if (msg.offset == 0) manifest[msg.id].content = new Uint8Array(msg.size)
+              manifest[msg.id].content.set(body, msg.offset)
+              manifest[msg.id]._pending = setTimeout(() => {
+                handlePut(msg.id, manifest[msg.id].content, msg.mime, msg.modified)
+                delete manifest[msg.id].content
+              }, 4096)
+            } else if (msg.size) {
+              handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
+            } else {
+              handleDelete(msg.id, msg.modified)
+            }
           }
         }
-      }
-      break
+        break
 
-    case "feedme":
-      fetch(msg.url)
-      break
+      case "feedme":
+        fetch(msg.url)
+        break
 
-    default:
-      console.error("I dunno what to do with", msg)
-      break
-  }
-})
+      default:
+        console.error("I dunno what to do with", msg)
+        break
+    }
+  })
 
-// Connection error
-ws.addEventListener("eror", e => {
-  console.error(e)
-})
+  // Connection error
+  ws.addEventListener("error", e => {
+    console.error(e)
+  })
 
-// Connection closed
-ws.addEventListener("close", e => {
-  console.warn(e)
-})
+  // Connection closed
+  ws.addEventListener("close", e => {
+    console.warn(e)
+  })
+}
 
 function send(msg) {
   console.log("sending", msg, "...")
