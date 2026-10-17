@@ -53,15 +53,15 @@ async function handleGet(url) {
     html += `html { background-color: #111; color: #eee; }\n`
     html += `a, a:link { color: #9cf; }\n`
     html += `a:visited { color: #cf9; }}</style>\n`
-    html += `<h1>${url}</h1><table><tr><th>Name</th><th>Size</th><th>Modified</th></tr>`
+    html += `<h1>${url}</h1><table><tr><th></th><th>Name</th><th>Size</th><th>Modified</th></tr>`
     html += `<tr><td><a href="../">../</a></td></tr>\n`
     for (let entry of folders) {
-      html += `<tr>\n`
+      html += `<tr><td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">📁</a></td>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
       html += `</tr>\n`
     }
     for (let entry of files) {
-      html += `<tr>\n`
+      html += `<tr><td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">📝</a></td>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
       html += `<td>${manifest[url + entry]?.size ? humanSize(manifest[url + entry]?.size) : ""}</td>\n`
       html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified.toLocaleString() : ""}</td>\n`
