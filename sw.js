@@ -28,6 +28,9 @@ addEventListener("fetch", async (event) => {
 })
 
 async function handleGet(url) {
+  url = url.split("?")[0]
+  url = url.split("#")[0]
+  if (url == root + "sync.json") return
   let cache = await caches.open(location.pathname)
 
   if (url.slice(-1) == "/") {
@@ -72,6 +75,12 @@ async function handleGet(url) {
 }
 
 async function handlePut(url, body, type, modified = null) {
+  url = url.split("?")[0]
+  url = url.split("#")[0]
+  if (url == root + "sync.json") {
+    if (modified) return
+    ws?.close()
+  }
   let cache = await caches.open(location.pathname)
   if (!type) {
     let ext = url.slice(url.lastIndexOf(".") + 1).toLowerCase()
@@ -119,6 +128,12 @@ async function handlePut(url, body, type, modified = null) {
 }
 
 async function handleDelete(url, modified) {
+  url = url.split("?")[0]
+  url = url.split("#")[0]
+  if (url == root + "sync.json") {
+    if (modified) return
+    ws?.close()
+  }
   let cache = await caches.open(location.pathname)
 
   if (url.slice(-1) == "/") {
@@ -154,12 +169,19 @@ async function generateManifest() {
     entry.size = parseInt(resp.headers.get("Content-Length"))
     console.log("entry", entry)
   }
+  delete manifest[root + "sync.json"]
   manifest.isComplete = true
   connect()
 }
 generateManifest()
 
 async function queueUpload(url, downloaded) {
+  url = url.split("?")[0]
+  url = url.split("#")[0]
+  if (url == root + "sync.json") {
+    connect()
+    return delete manifest[root + "sync.json"]
+  }
   let entry = manifest[url] = manifest[url] || {}
   clearTimeout(entry._pending)
   let cache = await caches.open(location.pathname)
@@ -187,6 +209,7 @@ async function queueUpload(url, downloaded) {
 }
 
 async function connect() {
+  if (ws && ws.readyState < 2) return
   account = null
   user = null
   room = null
@@ -198,7 +221,7 @@ async function connect() {
   if (!account.password) return
 
   // Create WebSocket connection.
-  ws = new WebSocket("wss://hotater-eu.onrender.com/ws/chat")
+  ws = new WebSocket(account.url || "wss://hotater-eu.onrender.com/ws/chat")
   ws.addEventListener("open", (event) => {
     send({ type: "user", name: "webpen" })
   })
@@ -292,7 +315,8 @@ async function connect() {
 
 function send(msg) {
   console.log("sending", msg, "...")
-  ws.send(JSON.stringify(msg))
+  ws?.send(JSON.stringify(msg))
+  connect()
 }
 
 async function sendHashKey() {
