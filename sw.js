@@ -68,7 +68,7 @@ async function handleGet(url) {
       html += `</tr>\n`
     }
     html += `</table>`
-    return new Response(html, { headers: { "Content-Type": "text/html" } })
+    return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } })
   } else {
     let resp = await cache.match(url)
 
@@ -100,15 +100,15 @@ async function handlePut(url, body, type, modified = null) {
     switch (ext) {
       case "html":
       case "css":
-        type = "text/" + ext
+        type = "text/" + ext + "; charset=utf-8"
         break
 
       case "js":
-        type = "text/javascript"
+        type = "text/javascript; charset=utf-8"
         break
 
       case "txt":
-        type = "text/plain"
+        type = "text/plain; charset=utf-8"
         break
 
       case "png":
