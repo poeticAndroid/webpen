@@ -50,11 +50,16 @@ async function handleGet(url) {
     html += `html { background-color: #111; color: #eee; }\n`
     html += `a, a:link { color: #9cf; }\n`
     html += `a:visited { color: #cf9; }}</style>\n`
-    html += `<h1>${url}</h1><ul><li><a href="../">../</a></li>\n`
+    html += `<h1>${url}</h1><table><tr><th>Name</th><th>Size</th><th>Modified</th></tr>`
+    html += `<tr><td><a href="../">../</a></td></tr>\n`
     for (let entry of entries) {
-      html += `<li><a href="${entry}">${entry}</a></li>\n`
+      html += `<tr>\n`
+      html += `<td><a href="${entry}">${entry}</a></td>\n`
+      html += `<td>${manifest[url + entry]?.size ? manifest[url + entry]?.size + " bytes" : ""}</td>\n`
+      html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified : ""}</td>\n`
+      html += `</tr>\n`
     }
-    html += `</ul>`
+    html += `</table>`
     return new Response(html, { headers: { "Content-Type": "text/html" } })
   } else {
     let resp = await cache.match(url)
