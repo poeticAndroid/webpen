@@ -63,7 +63,7 @@ async function handleGet(url) {
     for (let entry of files) {
       html += `<tr>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
-      html += `<td>${manifest[url + entry]?.size ? manifest[url + entry]?.size + " bytes" : ""}</td>\n`
+      html += `<td>${manifest[url + entry]?.size ? humanSize(manifest[url + entry]?.size) : ""}</td>\n`
       html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified.toLocaleString() : ""}</td>\n`
       html += `</tr>\n`
     }
@@ -343,4 +343,13 @@ async function sendHashKey() {
 
 async function sleep(msecs) {
   return new Promise((resolve, reject) => setTimeout(resolve, msecs))
+}
+
+function humanSize(bytes) {
+  let units = ["QiB", "RiB", "YiB", "ZiB", "EiB", "PiB", "TiB", "GiB", "MiB", "KiB", "bytes"]
+  while (bytes > 2048 && units.length > 1) {
+    bytes /= 1024
+    units.pop()
+  }
+  return bytes + " " + units.pop()
 }
