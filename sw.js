@@ -35,24 +35,32 @@ async function handleGet(url) {
 
   if (url.slice(-1) == "/") {
     while (!manifest.isComplete) await sleep(32)
-    let entries = []
+    let folders = [], files = []
     for (let entry in manifest) {
       if (entry.includes(url) && manifest[entry]?.size) {
         entry = entry.replace(url, "")
         if (entry.includes("/")) {
           entry = entry.split("/")[0] + "/"
+          if (!folders.includes(entry)) folders.push(entry)
+        } else if (entry && !files.includes(entry)) {
+          files.push(entry)
         }
-        if (entry && !entries.includes(entry)) entries.push(entry)
       }
     }
-    entries = entries.sort()
+    folders = folders.sort()
+    files = files.sort()
     let html = `<!DOCTYPE html><style>@media (prefers-color-scheme: dark) {\n`
     html += `html { background-color: #111; color: #eee; }\n`
     html += `a, a:link { color: #9cf; }\n`
     html += `a:visited { color: #cf9; }}</style>\n`
     html += `<h1>${url}</h1><table><tr><th>Name</th><th>Size</th><th>Modified</th></tr>`
     html += `<tr><td><a href="../">../</a></td></tr>\n`
-    for (let entry of entries) {
+    for (let entry of folders) {
+      html += `<tr>\n`
+      html += `<td><a href="${entry}">${entry}</a></td>\n`
+      html += `</tr>\n`
+    }
+    for (let entry of files) {
       html += `<tr>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
       html += `<td>${manifest[url + entry]?.size ? manifest[url + entry]?.size + " bytes" : ""}</td>\n`
