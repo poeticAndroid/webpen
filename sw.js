@@ -64,7 +64,7 @@ async function handleGet(url) {
       html += `<tr>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
       html += `<td>${manifest[url + entry]?.size ? manifest[url + entry]?.size + " bytes" : ""}</td>\n`
-      html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified : ""}</td>\n`
+      html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified.toLocaleString() : ""}</td>\n`
       html += `</tr>\n`
     }
     html += `</table>`
