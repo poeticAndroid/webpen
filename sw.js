@@ -360,7 +360,7 @@ function humanSize(bytes) {
 if (typeof Uint8Array.fromBase64 !== 'function') {
   Uint8Array.fromBase64 = function (base64String, options = {}) {
     // Remove padding and whitespace
-    // const cleanedBase64 = base64String.replace(/=+$/, '').replace(/\s/g, '');
+    const cleanedBase64 = base64String.replace(/=+$/, '').replace(/\s/g, '');
 
     // Decode base64 string to a binary string
     // atob() is widely supported in older browsers (IE10+)
