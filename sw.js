@@ -53,7 +53,7 @@ async function handleGet(url) {
     html += `html { background-color: #111; color: #eee; }\n`
     html += `a, a:link { color: #9cf; }\n`
     html += `a:visited { color: #cf9; }}</style>\n`
-    html += `<h1>${url}</h1><table><tr><th></th><th>Name</th><th>Size</th><th>Modified</th></tr>`
+    html += `<h1>${url}</h1><table><tr><th></th><th>Name</th><th>Size</th><th>Modified</th></tr>\n`
     html += `<tr><td><a href="../">../</a></td></tr>\n`
     for (let entry of folders) {
       html += `<tr><td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">📁</a></td>\n`
@@ -67,7 +67,7 @@ async function handleGet(url) {
       html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified.toLocaleString() : ""}</td>\n`
       html += `</tr>\n`
     }
-    html += `</table>`
+    html += `</table>\n`
     return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } })
   } else {
     let resp = await cache.match(url)
@@ -352,4 +352,40 @@ function humanSize(bytes) {
     units.pop()
   }
   return bytes + " " + units.pop()
+}
+
+
+/* shim */
+
+if (typeof Uint8Array.fromBase64 !== 'function') {
+  Uint8Array.fromBase64 = function (base64String, options = {}) {
+    // Remove padding and whitespace
+    // const cleanedBase64 = base64String.replace(/=+$/, '').replace(/\s/g, '');
+
+    // Decode base64 string to a binary string
+    // atob() is widely supported in older browsers (IE10+)
+    const binaryString = atob(cleanedBase64)
+    const len = binaryString.length
+    const bytes = new Uint8Array(len)
+
+    for (let i = 0; i < len; i++) {
+      bytes[i] = binaryString.charCodeAt(i)
+    }
+
+    return bytes
+  }
+}
+if (typeof Uint8Array.prototype.toBase64 !== 'function') {
+  Uint8Array.prototype.toBase64 = function (options = {}) {
+    // Convert the Uint8Array to a binary string
+    let binaryString = '';
+    const len = this.length;
+
+    for (let i = 0; i < len; i++) {
+      binaryString += String.fromCharCode(this[i]);
+    }
+
+    // btoa() converts a binary string to a base64 encoded string
+    return btoa(binaryString);
+  };
 }
