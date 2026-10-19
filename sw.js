@@ -389,6 +389,12 @@ if (typeof Uint8Array.prototype.toBase64 !== 'function') {
     return btoa(binaryString)
   };
 }
+if (typeof Request.prototype.bytes !== 'function') {
+  Request.prototype.bytes = async function () {
+    const buffer = await this.arrayBuffer()
+    return new Uint8Array(buffer)
+  }
+}
 if (typeof Response.prototype.bytes !== 'function') {
   Response.prototype.bytes = async function () {
     const buffer = await this.arrayBuffer()
