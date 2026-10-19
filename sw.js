@@ -355,12 +355,12 @@ function humanSize(bytes) {
 }
 
 
-/* shim */
+/* shims */
 
 if (typeof Uint8Array.fromBase64 !== 'function') {
   Uint8Array.fromBase64 = function (base64String, options = {}) {
     // Remove padding and whitespace
-    const cleanedBase64 = base64String.replace(/=+$/, '').replace(/\s/g, '');
+    const cleanedBase64 = base64String.replace(/=+$/, '').replace(/\s/g, '')
 
     // Decode base64 string to a binary string
     // atob() is widely supported in older browsers (IE10+)
@@ -378,14 +378,20 @@ if (typeof Uint8Array.fromBase64 !== 'function') {
 if (typeof Uint8Array.prototype.toBase64 !== 'function') {
   Uint8Array.prototype.toBase64 = function (options = {}) {
     // Convert the Uint8Array to a binary string
-    let binaryString = '';
-    const len = this.length;
+    let binaryString = ''
+    const len = this.length
 
     for (let i = 0; i < len; i++) {
-      binaryString += String.fromCharCode(this[i]);
+      binaryString += String.fromCharCode(this[i])
     }
 
     // btoa() converts a binary string to a base64 encoded string
-    return btoa(binaryString);
+    return btoa(binaryString)
   };
+}
+if (typeof Response.prototype.bytes !== 'function') {
+  Response.prototype.bytes = async function () {
+    const buffer = await this.arrayBuffer()
+    return new Uint8Array(buffer)
+  }
 }
