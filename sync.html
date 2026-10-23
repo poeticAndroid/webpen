@@ -64,10 +64,12 @@
 
         let now = new Date()
         let min = now.getMinutes()
+        let hrs = now.getHours()
         fetch("./sync.html", { method: "delete" })
         setInterval(e => {
             now = new Date()
-            if (min != now.getMinutes()) location.reload(true)
+            if (hrs != now.getHours()) history.back()
+            else if (min != now.getMinutes()) location.reload(true)
         }, 1024)
 
         navigator.serviceWorker.register("./sw.js", { scope: "./" })
