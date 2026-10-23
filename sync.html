@@ -62,6 +62,13 @@
             })
         })
 
+        let now = new Date()
+        let min = now.getMinutes()
+        fetch("./trash", { method: "delete" })
+        setInterval(e => {
+            if (min != now.getMinutes()) location.reload(true)
+        }, 1024)
+
         navigator.serviceWorker.register("./sw.js", { scope: "./" })
     </script>
 </body>
