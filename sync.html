@@ -16,6 +16,11 @@
             color: aqua;
         }
 
+        label {
+            display: inline-block;
+            min-width: 8em;
+        }
+
         #run {
             position: absolute;
             margin: 0;
@@ -37,13 +42,15 @@
     <p id="run">
         <a id="urlLink" accesskey="r" href="./">/ Root</a>
     </p>
-    <form>
-        <p><label for="nameInp"></label><input id="nameInp" /></p>
-        <p><label for="passwordInp"></label><input id="passwordInp" /></p>
+    <h1>Sync!</h1>
+    <form method="delete">
+        <p><label for="nameInp">name:</label> <input id="nameInp" /></p>
+        <p><label for="passwordInp">password:</label> <input id="passwordInp" /></p>
         <p><button id="syncBtn">Sync!</button></p>
     </form>
     <script>
         document.querySelector("#syncBtn").addEventListener("click", e => {
+            e.preventDefault()
             let name = document.querySelector("#nameInp").value.trim()
             let password = document.querySelector("#passwordInp").value.trim()
 
