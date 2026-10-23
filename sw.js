@@ -7,7 +7,7 @@ addEventListener("fetch", async (event) => {
   if (!url.includes(root)) return event.respondWith(fetch(event.request))
   url = url.split("?")[0]
   url = url.split("#")[0]
-  console.log("Fetch detected:", method, url)
+  // console.log("Fetch detected:", method, url)
 
   switch (method) {
     case "get":
@@ -180,7 +180,6 @@ async function generateManifest() {
     let resp = await cache.match(req.url)
     entry.modified = new Date(resp.headers.get("Last-Modified"))
     entry.size = parseInt(resp.headers.get("Content-Length"))
-    console.log("entry", entry)
   }
   delete manifest[root + "sync.json"]
   manifest.isComplete = true
@@ -203,6 +202,7 @@ async function queueUpload(url, downloaded) {
   entry.modified = new Date(resp.headers.get("Last-Modified"))
   entry.size = parseInt(resp.headers.get("Content-Length"))
   if (!downloaded) entry._pending = setTimeout(async () => {
+    console.log(entry.size ? "🔺" : "🔺🗑️", url)
     entry = JSON.parse(JSON.stringify(entry))
     entry.type = "obj"
     entry.to = "others"
@@ -242,7 +242,7 @@ async function connect() {
   // Listen for messages
   ws.addEventListener("message", (event) => {
     let msg = JSON.parse(event.data)
-    console.log("Message from server ", msg)
+    // console.log("Message from server ", msg)
     switch (msg.type) {
       case "user":
         user = msg
@@ -290,15 +290,20 @@ async function connect() {
             if (typeof msg.offset == "number") {
               let body = Uint8Array.fromBase64(msg.content)
               manifest[msg.id] = manifest[msg.id] || {}
-              if (msg.offset == 0) manifest[msg.id].content = new Uint8Array(msg.size)
+              if (msg.offset == 0) {
+                console.log("🔻", msg.id)
+                manifest[msg.id].content = new Uint8Array(msg.size)
+              }
               manifest[msg.id].content.set(body, msg.offset)
               manifest[msg.id]._pending = setTimeout(() => {
                 handlePut(msg.id, manifest[msg.id].content, msg.mime, msg.modified)
                 delete manifest[msg.id].content
               }, 4096)
             } else if (msg.size) {
+              console.log("🔻", msg.id)
               handlePut(msg.id, Uint8Array.fromBase64(msg.content), msg.mime, msg.modified)
             } else {
+              console.log("🔻🗑️", msg.id)
               handleDelete(msg.id, msg.modified)
             }
           }
@@ -327,7 +332,7 @@ async function connect() {
 }
 
 function send(msg) {
-  console.log("sending", msg, "...")
+  // console.log("sending", msg, "...")
   ws?.send(JSON.stringify(msg))
   connect()
 }
@@ -387,7 +392,7 @@ if (typeof Uint8Array.prototype.toBase64 !== 'function') {
 
     // btoa() converts a binary string to a base64 encoded string
     return btoa(binaryString)
-  };
+  }
 }
 if (typeof Request.prototype.bytes !== 'function') {
   Request.prototype.bytes = async function () {
