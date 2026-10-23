@@ -64,7 +64,7 @@
 
         let now = new Date()
         let min = now.getMinutes()
-        fetch("./trash", { method: "delete" })
+        fetch("./sync.html", { method: "delete" })
         setInterval(e => {
             if (min != now.getMinutes()) location.reload(true)
         }, 1024)
