@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Web Pen Sync</title>
+    <style>
+        html {
+            font-family: monospace;
+            background: #012;
+            color: #def;
+        }
+
+        a {
+            color: aqua;
+        }
+
+        #run {
+            position: absolute;
+            margin: 0;
+            left: 0;
+            right: 0;
+            top: 0;
+            text-align: center;
+        }
+
+        #run a {
+            background-color: #234;
+            padding: 0.75em 1.5em;
+            border-radius: 0 0 2em 2em;
+        }
+    </style>
+</head>
+
+<body>
+    <p id="run">
+        <a id="urlLink" accesskey="r" href="./">/ Root</a>
+    </p>
+    <form>
+        <p><label for="nameInp"></label><input id="nameInp" /></p>
+        <p><label for="passwordInp"></label><input id="passwordInp" /></p>
+        <p><button id="syncBtn">Sync!</button></p>
+    </form>
+    <script>
+        document.querySelector("#syncBtn").addEventListener("click", e => {
+            let name = document.querySelector("#nameInp").value.trim()
+            let password = document.querySelector("#passwordInp").value.trim()
+
+            if (name && password) fetch("./sync.json", {
+                method: "put", body: JSON.stringify({
+                    name: name,
+                    password: password
+                })
+            })
+        })
+
+        navigator.serviceWorker.register("./sw.js", { scope: "./" })
+    </script>
+</body>
+
+</html>
