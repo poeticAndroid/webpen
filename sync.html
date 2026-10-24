@@ -46,7 +46,7 @@
     <form method="delete">
         <p><label for="nameInp">name:</label> <input id="nameInp" /></p>
         <p><label for="passwordInp">password:</label> <input id="passwordInp" /></p>
-        <p><button id="syncBtn">Sync!</button> <em id="onlineCount">Waiting for other clients..</em></p>
+        <p><button id="syncBtn">Sync!</button> <em id="onlineCount">Waiting for other devices..</em></p>
     </form>
     <script>
         document.querySelector("#syncBtn").addEventListener("click", e => {
@@ -76,7 +76,7 @@
                     j.push(id)
                     fetch("./online.json", { method: "put", body: JSON.stringify(j) })
                 }
-                document.querySelector("#onlineCount").textContent = j.length + " client(s) online.."
+                if (j.length > 1) document.querySelector("#onlineCount").textContent = j.length + " devices online.."
             } else {
                 id = "" + Math.random()
                 sessionStorage.setItem("_browser_id", id)
@@ -91,8 +91,8 @@
         setInterval(e => {
             now = new Date()
             if (hrs != now.getHours()) {
-                history.back()
                 fetch("./online.json", { method: "delete" })
+                history.back()
             } else if (min != now.getMinutes()) {
                 location.reload(true)
             }
