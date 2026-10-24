@@ -89,7 +89,7 @@
                     document.querySelector("#onlineCount").textContent = now.toLocaleTimeString() + ": " + j.length + " devices online.."
                 }
             } else {
-                id = "" + Math.random()
+                id = "" + Date.now() + Math.random()
                 sessionStorage.setItem("_browser_id", id)
                 fetch("./online.json", { method: "put", body: JSON.stringify([id]) })
             }
