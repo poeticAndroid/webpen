@@ -49,12 +49,10 @@ async function handleGet(url) {
     }
     folders = folders.sort()
     files = files.sort()
-    let html = `<!DOCTYPE html><style>@media (prefers-color-scheme: dark) {\n`
-    html += `html { background-color: #111; color: #eee; }\n`
-    html += `a, a:link { color: #9cf; }\n`
-    html += `a:visited { color: #cf9; }}</style>\n`
-    html += `<h1>${url}</h1><table><tr><th></th><th>Name</th><th>Size</th><th>Modified</th></tr>\n`
-    html += `<tr><td><a href="../">../</a></td></tr>\n`
+    let html = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0" />\n`
+    html += `<link rel="stylesheet" href="${root}index.css" /></head>\n`
+    html += `<body><h1>${url}</h1><table><tr><th></th><th>Name</th><th>Size</th><th>Modified</th></tr>\n`
+    html += `<tr><td><a href="../">↖️</a></td><td><a href="../">../</a></td></tr>\n`
     for (let entry of folders) {
       html += `<tr><td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">📁</a></td>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
@@ -67,7 +65,7 @@ async function handleGet(url) {
       html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified.toLocaleString() : ""}</td>\n`
       html += `</tr>\n`
     }
-    html += `</table>\n`
+    html += `</table></body></html>\n`
     return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } })
   } else {
     let resp = await cache.match(url)
@@ -356,7 +354,7 @@ function humanSize(bytes) {
     bytes /= 1024
     units.pop()
   }
-  return bytes + " " + units.pop()
+  return (Math.round(bytes * 100) / 100) + " " + units.pop()
 }
 
 
