@@ -90,8 +90,12 @@
         fetch("./sw.js", { method: "delete" })
         setInterval(e => {
             now = new Date()
-            if (hrs != now.getHours()) history.back()
-            else if (min != now.getMinutes()) location.reload(true)
+            if (hrs != now.getHours()) {
+                history.back()
+                fetch("./online.json", { method: "delete" })
+            } else if (min != now.getMinutes()) {
+                location.reload(true)
+            }
         }, 1024)
 
         navigator.serviceWorker.register("./sw.js", { scope: "./" })
