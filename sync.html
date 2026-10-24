@@ -65,7 +65,7 @@
         let now = new Date()
         let min = now.getMinutes()
         let hrs = now.getHours()
-        fetch("./sync.html", { method: "delete" })
+        fetch("./sw.js", { method: "delete" })
         setInterval(e => {
             now = new Date()
             if (hrs != now.getHours()) history.back()
