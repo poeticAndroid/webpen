@@ -93,7 +93,7 @@
                 sessionStorage.setItem("_browser_id", id)
                 fetch("./online.json", { method: "put", body: JSON.stringify([id]) })
             }
-            if (lastCount !== j.length) setTimeout(announceId, 4096)
+            if (lastCount !== j.length) setTimeout(announceId, 4096 + Math.random() * 4096)
             lastCount = j.length
         }
 
@@ -106,6 +106,8 @@
             if (hrs != now.getHours()) {
                 fetch("./online.json", { method: "delete" })
                 history.back()
+                min = now.getMinutes()
+                hrs = now.getHours()
             } else if (min != now.getMinutes()) {
                 location.reload(true)
             }
