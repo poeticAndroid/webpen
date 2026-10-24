@@ -70,10 +70,11 @@
             }
         })
 
+        let lastCount = -1
         async function announceId() {
             let id = sessionStorage.getItem("_browser_id")
+            let j = []
             if (id) {
-                let j = []
                 try {
                     j = await fetch("./online.json")
                     j = await j.json() || []
@@ -92,6 +93,8 @@
                 sessionStorage.setItem("_browser_id", id)
                 fetch("./online.json", { method: "put", body: JSON.stringify([id]) })
             }
+            if (lastCount !== j.length) setTimeout(announceId, 4096)
+            lastCount = j.length
         }
 
         let now = new Date()
