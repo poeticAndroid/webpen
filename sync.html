@@ -46,7 +46,9 @@
     <form method="delete">
         <p><label for="nameInp">name:</label> <input id="nameInp" /></p>
         <p><label for="passwordInp">password:</label> <input id="passwordInp" /></p>
-        <p><button id="syncBtn">Sync!</button> <em id="onlineCount">Waiting for other devices..</em></p>
+        <p><button id="syncBtn">Sync!</button> <em id="onlineCount">
+                <script>document.write(now.toLocaleTimeString())</script>: Waiting for other devices..
+            </em></p>
     </form>
     <script>
         document.querySelector("#syncBtn").addEventListener("click", e => {
@@ -82,7 +84,9 @@
                     j.push(id)
                     fetch("./online.json", { method: "put", body: JSON.stringify(j) })
                 }
-                if (j.length > 1) document.querySelector("#onlineCount").textContent = j.length + " devices online.."
+                if (j.length > 1) {
+                    document.querySelector("#onlineCount").textContent = now.toLocaleTimeString() + ": " + j.length + " devices online.."
+                }
             } else {
                 id = "" + Math.random()
                 sessionStorage.setItem("_browser_id", id)
