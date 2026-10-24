@@ -54,12 +54,18 @@
             let name = document.querySelector("#nameInp").value.trim()
             let password = document.querySelector("#passwordInp").value.trim()
 
-            if (name && password) fetch("./sync.json", {
-                method: "put", body: JSON.stringify({
-                    name: name,
-                    password: password
+            if (name && password) {
+                fetch("./sync.json", {
+                    method: "put", body: JSON.stringify({
+                        name: name,
+                        password: password
+                    })
                 })
-            })
+            } else {
+                fetch("./online.json", { method: "delete" })
+                fetch("./sync.html", { method: "delete" })
+                location.reload(true)
+            }
         })
 
         async function announceId() {
