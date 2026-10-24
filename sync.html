@@ -44,6 +44,7 @@
     </p>
     <h1>Sync!</h1>
     <form method="delete">
+        <p><label for="deviceInp">device:</label> <input id="deviceInp" /></p>
         <p><label for="nameInp">name:</label> <input id="nameInp" /></p>
         <p><label for="passwordInp">password:</label> <input id="passwordInp" /></p>
         <p><button id="syncBtn">Sync!</button> <em id="onlineCount">
@@ -53,8 +54,11 @@
     <script>
         document.querySelector("#syncBtn").addEventListener("click", e => {
             e.preventDefault()
+            let device = document.querySelector("#deviceInp").value.trim() || "" + Date.now() + Math.random()
             let name = document.querySelector("#nameInp").value.trim()
             let password = document.querySelector("#passwordInp").value.trim()
+
+            localStorage.setItem("_browser_id", device)
 
             if (name && password) {
                 fetch("./sync.json", {
@@ -72,7 +76,7 @@
 
         let lastCount = -1
         async function announceId() {
-            let id = sessionStorage.getItem("_browser_id")
+            let id = localStorage.getItem("_browser_id")
             let j = []
             if (id) {
                 try {
@@ -85,12 +89,11 @@
                     j.push(id)
                     fetch("./online.json", { method: "put", body: JSON.stringify(j) })
                 }
-                if (j.length > 1) {
-                    document.querySelector("#onlineCount").textContent = now.toLocaleTimeString() + ": " + j.length + " devices online.."
-                }
+                document.querySelector("#onlineCount").textContent = now.toLocaleTimeString() + ": " + j.join(", ") + " are online.."
             } else {
                 id = "" + Date.now() + Math.random()
-                sessionStorage.setItem("_browser_id", id)
+                localStorage.setItem("_browser_id", id)
+                document.querySelector("#deviceInp").value = id
                 fetch("./online.json", { method: "put", body: JSON.stringify([id]) })
             }
             if (lastCount !== j.length) setTimeout(announceId, 4096 + Math.random() * 4096)
