@@ -5,39 +5,14 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Web Pen</title>
-  <style>
-    html {
-      font-family: monospace;
-      background: #012;
-      color: #def;
-    }
-
-    a {
-      color: aqua;
-    }
-
-    #run {
-      position: absolute;
-      margin: 0;
-      left: 0;
-      right: 0;
-      top: 0;
-      text-align: center;
-    }
-
-    #run a {
-      background-color: #234;
-      padding: 0.75em 1.5em;
-      border-radius: 0 0 2em 2em;
-    }
-  </style>
+  <link rel="stylesheet" href="index.css" />
 </head>
 
 <body>
-  <p id="run">
-    <a id="urlLink" accesskey="r" href="edit.html">✏️ Edit</a>
-  </p>
   <script>
+    setTimeout(() => {
+      location.replace("./")
+    }, 1024)
     navigator.serviceWorker.register("./sw.js", { scope: "./" })
   </script>
 </body>
