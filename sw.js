@@ -59,7 +59,7 @@ async function handleGet(url) {
       html += `</tr>\n`
     }
     for (let entry of files) {
-      html += `<tr><td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">📝</a></td>\n`
+      html += `<tr><td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">${entry.includes(".html") ? "🚀" : "📝"}</a></td>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
       html += `<td>${manifest[url + entry]?.size ? humanSize(manifest[url + entry]?.size) : ""}</td>\n`
       html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified.toLocaleString() : ""}</td>\n`
