@@ -10,6 +10,7 @@ addEventListener("fetch", async (event) => {
   // console.log("Fetch detected:", method, url)
 
   switch (method) {
+    case "head":
     case "get":
       event.respondWith(handleGet(url))
       break
