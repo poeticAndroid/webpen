@@ -107,11 +107,11 @@
             if (hrs != now.getHours()) {
                 fetch("./online.json", { method: "delete" })
                 history.back()
-                min = now.getMinutes()
-                hrs = now.getHours()
             } else if (min != now.getMinutes()) {
                 fetch("./sw.js", { method: "delete" })
             }
+            min = now.getMinutes()
+            hrs = now.getHours()
         }, 1024)
 
         navigator.serviceWorker.register("./sw.js", { scope: "./" })
