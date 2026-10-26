@@ -54,11 +54,14 @@
     <script>
         document.querySelector("#syncBtn").addEventListener("click", e => {
             e.preventDefault()
-            let device = document.querySelector("#deviceInp").value.trim() || "" + Date.now() + Math.random()
+            let device = document.querySelector("#deviceInp").value.trim()
             let name = document.querySelector("#nameInp").value.trim()
             let password = document.querySelector("#passwordInp").value.trim()
 
-            localStorage.setItem("_browser_id", device)
+            if (device) {
+                localStorage.setItem("_browser_id", device)
+                fetch("./online.json", { method: "put", body: JSON.stringify([device]) })
+            }
 
             if (name && password) {
                 fetch("./sync.json", {
@@ -68,42 +71,38 @@
                     })
                 })
             } else {
-                fetch("./online.json", { method: "delete" })
                 fetch("./sync.html", { method: "delete" })
                 location.reload(true)
             }
         })
 
-        let lastCount = -1
+        let timeout = 16
         async function announceId() {
-            let id = localStorage.getItem("_browser_id")
+            fetch("./sw.js", { method: "delete" })
             let j = []
-            if (id) {
-                try {
-                    j = await fetch("./online.json")
-                    j = await j.json() || []
-                } catch (error) {
-                    j = []
-                }
-                if (!j.includes(id)) {
-                    j.push(id)
-                    fetch("./online.json", { method: "put", body: JSON.stringify(j) })
-                }
-                document.querySelector("#onlineCount").textContent = now.toLocaleTimeString() + ": " + j.join(", ") + " are online.."
-            } else {
-                id = "" + Date.now() + Math.random()
-                localStorage.setItem("_browser_id", id)
-                document.querySelector("#deviceInp").value = id
-                fetch("./online.json", { method: "put", body: JSON.stringify([id]) })
+            try {
+                j = await fetch("./online.json")
+                j = await j.json() || []
+            } catch (error) {
+                j = []
             }
-            if (lastCount !== j.length) setTimeout(announceId, 4096 + Math.random() * 4096)
-            lastCount = j.length
+            if (!j.includes(id)) {
+                j.push(id)
+                fetch("./online.json", { method: "put", body: JSON.stringify(j) })
+            }
+            document.querySelector("#onlineCount").textContent = now.toLocaleTimeString() + ": " + j.join(", ") + " are online.."
+
+            if (timeout < 9000) timeout *= 2
+            setTimeout(announceId, timeout + Math.random() * timeout * 2)
         }
+
+        let id = localStorage.getItem("_browser_id") || "" + Date.now() + Math.random()
+        document.querySelector("#deviceInp").value = id
+        fetch("./online.json", { method: "put", body: JSON.stringify([id]) })
 
         let now = new Date()
         let min = now.getMinutes()
         let hrs = now.getHours()
-        fetch("./sw.js", { method: "delete" })
         setInterval(e => {
             now = new Date()
             if (hrs != now.getHours()) {
@@ -111,9 +110,9 @@
                 history.back()
                 min = now.getMinutes()
                 hrs = now.getHours()
-            } else if (min != now.getMinutes()) {
+            } /* else if (min != now.getMinutes()) {
                 location.reload(true)
-            }
+            } */
         }, 1024)
 
         navigator.serviceWorker.register("./sw.js", { scope: "./" })
