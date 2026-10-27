@@ -9,9 +9,10 @@
 </head>
 
 <body>
+  <p><a href="./">🗃️ Files</a></p>
   <script>
     setTimeout(() => {
-      location.replace("./")
+      if (!location.pathname.endsWith("/index.html")) location.replace("./index.html")
     }, 1024)
     navigator.serviceWorker.register("./sw.js", { scope: "./" })
   </script>
