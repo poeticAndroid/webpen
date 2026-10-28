@@ -68,10 +68,25 @@
       })
     }
 
+    function tidy(code) {
+      let clean = code.trim()
+      while (code != clean) {
+        code = clean
+        clean = code.trim().replaceAll(" \n", "\n").replaceAll("\t\n", "\n").replaceAll("\n\n\n", "\n\n") + "\n"
+      }
+      return clean
+    }
+
     addEventListener("hashchange", load)
     document.getElementById("bodyInp")?.addEventListener("change", e => {
       if (document.getElementById("bodyInp").value.trim()) {
-        fetch(url, { method: "put", body: document.getElementById("bodyInp").value.trim().replaceAll(" \n", "\n").replaceAll("\t\n", "\n").replaceAll("\n\n\n", "\n\n") + "\n" }).then(resp => {
+        let clean = tidy(document.getElementById("bodyInp").value)
+        if (document.getElementById("bodyInp").value != clean) {
+          let start = codeEditor.selectionStart, end = codeEditor.selectionEnd
+          document.getElementById("bodyInp").value = clean
+          codeEditor.selectionStart = start, codeEditor.selectionEnd = end
+        }
+        fetch(url, { method: "put", body: clean }).then(resp => {
           if (!resp?.ok) resp.text().then(alert)
         })
       } else {
