@@ -5,44 +5,11 @@
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Web Pen Sync</title>
-    <style>
-        html {
-            font-family: monospace;
-            background: #012;
-            color: #def;
-        }
-
-        a {
-            color: aqua;
-        }
-
-        label {
-            display: inline-block;
-            min-width: 8em;
-        }
-
-        #run {
-            position: absolute;
-            margin: 0;
-            left: 0;
-            right: 0;
-            top: 0;
-            text-align: center;
-        }
-
-        #run a {
-            background-color: #234;
-            padding: 0.75em 1.5em;
-            border-radius: 0 0 2em 2em;
-        }
-    </style>
+    <link rel="stylesheet" href="index.css" />
 </head>
 
 <body>
-    <p id="run">
-        <a id="urlLink" accesskey="r" href="./">/ Root</a>
-    </p>
-    <h1>Sync!</h1>
+    <h1>Web Pen Sync</h1>
     <form method="delete">
         <p><label for="deviceInp">device:</label> <input id="deviceInp" /></p>
         <p><label for="nameInp">name:</label> <input id="nameInp" /></p>
@@ -89,7 +56,7 @@
                 j.push(id)
                 fetch("./online.json", { method: "put", body: JSON.stringify(j) })
             }
-            document.querySelector("#onlineCount").textContent = now.toLocaleTimeString() + ": " + j.join(", ") + " are online.."
+            document.querySelector("#onlineCount").textContent = now.toLocaleTimeString() + ": Synced with " + j.join(", ")
 
             if (timeout < 9000) timeout *= 2
             setTimeout(announceId, timeout + Math.random() * timeout * 2)
