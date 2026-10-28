@@ -53,17 +53,17 @@ async function handleGet(url) {
     let html = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0" />\n`
     html += `<link rel="stylesheet" href="${root}index.css" /></head>\n`
     html += `<body><h1>${url}</h1><table><tr><th></th><th>Name</th><th>Size</th><th>Modified</th></tr>\n`
-    html += `<tr><td><a href="../">↖️</a></td><td><a href="../">../</a></td></tr>\n`
+    html += `<tr><td>↖️</td><td><a href="../">../</a></td></tr>\n`
     for (let entry of folders) {
-      html += `<tr><td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">📁</a></td>\n`
+      html += `<tr><td>📁</td>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
       html += `</tr>\n`
     }
     for (let entry of files) {
-      html += `<tr><td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">${entry.includes(".html") ? "🚀" : "📝"}</a></td>\n`
+      html += `<tr><td>${entry.includes(".html") ? "🚀" : "📝"}</td>\n`
       html += `<td><a href="${entry}">${entry}</a></td>\n`
       html += `<td>${manifest[url + entry]?.size ? humanSize(manifest[url + entry]?.size) : ""}</td>\n`
-      html += `<td>${manifest[url + entry]?.modified ? manifest[url + entry]?.modified.toLocaleString() : ""}</td>\n`
+      html += `<td><a href="${root}edit.html#${(url + entry).replace(root, "./")}">${manifest[url + entry]?.modified ? manifest[url + entry]?.modified.toLocaleString() : ""}</a></td>\n`
       html += `</tr>\n`
     }
     html += `</table></body></html>\n`
