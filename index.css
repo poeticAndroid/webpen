@@ -1,5 +1,7 @@
 @media (prefers-color-scheme: dark) {
     html {
+        font-family: monospace;
+        font-size: 20px;
         background-color: #111;
         color: #eee;
     }
