@@ -52,7 +52,7 @@ async function handleGet(url) {
     files = files.sort()
     let html = `<!DOCTYPE html><html><head><meta name="viewport" content="width=device-width, initial-scale=1.0" />\n`
     html += `<link rel="stylesheet" href="${root}index.css" /></head>\n`
-    html += `<body><h1>${url}</h1><table><tr><th></th><th>Name</th><th>Size</th><th>Modified</th></tr>\n`
+    html += `<body><h1>${url.replace(root, "./")}</h1><table><tr><th></th><th>Name</th><th>Size</th><th>Modified</th></tr>\n`
     html += `<tr><td>↖️</td><td><a href="../">../</a></td></tr>\n`
     for (let entry of folders) {
       html += `<tr><td>📁</td>\n`
